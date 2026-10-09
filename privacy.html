@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Posey Privacy</title>
+<style>
+  :root { --bg: #0d0c10; --text: #f4f2f7; --muted: rgba(244, 242, 247, 0.65); }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 32px 16px 48px; }
+  h1 { font-size: 22px; } h2 { font-size: 16px; margin-top: 28px; }
+  p, li { color: var(--muted); }
+  a { color: var(--text); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Posey — Privacy</h1>
+  <p>Posey is a personal tool: an Android camera that overlays pose guides, and this web
+  console for managing those guides. It is operated by its author for their own use.</p>
+
+  <h2>Google account data</h2>
+  <ul>
+    <li>Posey asks for your email address (to show who is signed in) and the
+      <code>drive.file</code> permission.</li>
+    <li><code>drive.file</code> lets Posey see and change <em>only</em> the files Posey
+      itself creates — a <strong>Posey</strong> folder holding pose images and their
+      analysis JSON. It cannot read anything else in your Drive.</li>
+    <li>Nothing is stored on any Posey server — there isn't one. Data lives in your Google
+      Drive and on your own devices.</li>
+  </ul>
+
+  <h2>Images and analysis</h2>
+  <p>When you ask Posey to analyse a pose, a downscaled copy of that image is sent to the
+  Anthropic Claude API using <em>your own</em> API key, which stays on your device or in
+  your browser and is never synced. Anthropic's terms govern that request.</p>
+
+  <h2>Removing access</h2>
+  <p>Revoke Posey at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>
+  and delete the Posey folder from your Drive.</p>
+
+  <p><a href="./">← Posey Console</a></p>
+</main>
+</body>
+</html>

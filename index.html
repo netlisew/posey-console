@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Posey Console</title>
+<meta name="description" content="Feed, cut out and analyse pose references for the Posey camera.">
+<meta name="theme-color" content="#0d0c10">
+<style>
+  :root {
+    --bg: #0d0c10;
+    --glass: rgba(255, 255, 255, 0.07);
+    --glass-edge: rgba(255, 255, 255, 0.16);
+    --text: #f4f2f7;
+    --muted: rgba(244, 242, 247, 0.62);
+    --accent: #ec4899;
+    --ok: #34d399;
+    --err: #f87171;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(60vw 50vh at 15% 0%, rgba(236, 72, 153, 0.18), transparent 70%),
+      radial-gradient(50vw 50vh at 100% 100%, rgba(99, 102, 241, 0.16), transparent 70%),
+      var(--bg);
+    color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  header {
+    position: sticky; top: 0;
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    background: rgba(13, 12, 16, 0.6);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border-bottom: 1px solid var(--glass-edge);
+  }
+  header h1 { font-size: 16px; margin: 0; letter-spacing: 0.02em; }
+  header .spacer { flex: 1; }
+  main { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+  .card {
+    background: var(--glass);
+    border: 1px solid var(--glass-edge);
+    border-radius: 18px;
+    padding: 20px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    margin-bottom: 16px;
+  }
+  .card h2 { font-size: 15px; margin: 0 0 8px; }
+  .muted { color: var(--muted); }
+  button {
+    font: inherit; color: var(--text);
+    background: rgba(236, 72, 153, 0.2);
+    border: 1.5px solid var(--accent);
+    border-radius: 999px;
+    padding: 8px 18px;
+    cursor: pointer;
+  }
+  button:hover { background: rgba(236, 72, 153, 0.32); }
+  button.ghost { background: var(--glass); border: 1px solid var(--glass-edge); }
+  button.ghost:hover { background: rgba(255, 255, 255, 0.12); }
+  button:disabled { opacity: 0.5; cursor: default; }
+  ul.checks { list-style: none; padding: 0; margin: 8px 0 0; }
+  ul.checks li { padding: 6px 0; display: flex; gap: 10px; align-items: baseline; }
+  ul.checks li::before { content: "•"; color: var(--muted); width: 1em; text-align: center; }
+  ul.checks li.ok::before { content: "✓"; color: var(--ok); }
+  ul.checks li.err::before { content: "✕"; color: var(--err); }
+  code { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); }
+  footer { text-align: center; padding: 24px 16px; font-size: 13px; }
+  footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>✦ Posey Console</h1>
+  <span class="spacer"></span>
+  <span id="who" class="muted"></span>
+  <button id="signin">Sign in with Google</button>
+  <button id="signout" class="ghost" hidden>Sign out</button>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Connection check</h2>
+    <p class="muted">
+      Starter page. Signs in with Google and makes sure Posey can reach its
+      <strong>Posey</strong> folder in your Drive — the folder the phone app and this
+      console will sync through. Album management, cut-outs and analysis come next.
+    </p>
+    <ul class="checks" id="checks">
+      <li id="c-signin">Google sign-in</li>
+      <li id="c-drive">Drive access (drive.file)</li>
+      <li id="c-folder">Posey folder</li>
+    </ul>
+  </section>
+</main>
+
+<footer><a href="privacy.html">Privacy</a></footer>
+
+<script src="https://accounts.google.com/gsi/client" async defer onload="initGoogle()"></script>
+<script>
+  // Web OAuth client in the "posey-photo-taker" Cloud project (public by design).
+  const CLIENT_ID = "708106056499-vmeb6vvjvoajvpv9b3v0dq5h0r37h848.apps.googleusercontent.com";
+  // drive.file: Posey only sees files it created (here or on the phone — same project).
+  const SCOPES = "openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/drive.file";
+  const FOLDER_NAME = "Posey";
+
+  let tokenClient = null;
+  let accessToken = null;
+  const $ = (id) => document.getElementById(id);
+
+  function mark(id, state, text) {
+    const li = $(id);
+    li.className = state || "";
+    if (text) li.textContent = text;
+  }
+
+  function initGoogle() {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: async (resp) => {
+        if (resp.error) { mark("c-signin", "err", "Google sign-in failed: " + resp.error); return; }
+        accessToken = resp.access_token;
+        $("signin").hidden = true;
+        $("signout").hidden = false;
+        await runChecks();
+      },
+    });
+  }
+
+  async function api(url, options = {}) {
+    const res = await fetch(url, {
+      ...options,
+      headers: { Authorization: "Bearer " + accessToken, ...(options.headers || {}) },
+    });
+    if (!res.ok) throw new Error(res.status + " " + (await res.text()).slice(0, 160));
+    return res.json();
+  }
+
+  async function runChecks() {
+    try {
+      const me = await api("https://www.googleapis.com/oauth2/v3/userinfo");
+      $("who").textContent = me.email || "";
+      mark("c-signin", "ok", "Signed in as " + (me.email || "Google user"));
+    } catch (e) { mark("c-signin", "err", "Sign-in check failed: " + e.message); return; }
+
+    let folder;
+    try {
+      const q = encodeURIComponent(
+        `name='${FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+      const list = await api(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&spaces=drive`);
+      mark("c-drive", "ok", "Drive access works");
+      folder = list.files[0];
+    } catch (e) { mark("c-drive", "err", "Drive access failed: " + e.message); return; }
+
+    try {
+      if (!folder) {
+        folder = await api("https://www.googleapis.com/drive/v3/files?fields=id,name", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: FOLDER_NAME, mimeType: "application/vnd.google-apps.folder" }),
+        });
+        mark("c-folder", "ok", "Created the Posey folder in your Drive");
+      } else {
+        const q = encodeURIComponent(`'${folder.id}' in parents and trashed=false`);
+        const items = await api(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&pageSize=1000`);
+        mark("c-folder", "ok", `Posey folder ready — ${items.files.length} item(s)`);
+      }
+    } catch (e) { mark("c-folder", "err", "Folder step failed: " + e.message); }
+  }
+
+  $("signin").onclick = () => tokenClient && tokenClient.requestAccessToken({ prompt: "" });
+  $("signout").onclick = () => {
+    if (accessToken) google.accounts.oauth2.revoke(accessToken, () => {});
+    accessToken = null;
+    $("who").textContent = "";
+    $("signin").hidden = false;
+    $("signout").hidden = true;
+    ["c-signin", "c-drive", "c-folder"].forEach((id, i) =>
+      mark(id, "", ["Google sign-in", "Drive access (drive.file)", "Posey folder"][i]));
+  };
+</script>
+</body>
+</html>
