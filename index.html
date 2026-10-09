@@ -10,233 +10,1068 @@
   :root {
     --bg: #0d0c10;
     --glass: rgba(255, 255, 255, 0.07);
+    --glass-strong: rgba(28, 26, 34, 0.82);
     --glass-edge: rgba(255, 255, 255, 0.16);
     --text: #f4f2f7;
     --muted: rgba(244, 242, 247, 0.62);
     --accent: #ec4899;
+    --accent-soft: rgba(236, 72, 153, 0.2);
     --ok: #34d399;
-    --err: #f87171;
+    --warn: #f59e0b;
+    --err: #ef4444;
+    --stage: #7e858f;
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
+  html, body { height: 100%; }
   body {
     margin: 0;
-    min-height: 100vh;
     background:
-      radial-gradient(60vw 50vh at 15% 0%, rgba(236, 72, 153, 0.18), transparent 70%),
-      radial-gradient(50vw 50vh at 100% 100%, rgba(99, 102, 241, 0.16), transparent 70%),
+      radial-gradient(60vw 50vh at 15% 0%, rgba(236, 72, 153, 0.16), transparent 70%),
+      radial-gradient(50vw 50vh at 100% 100%, rgba(99, 102, 241, 0.14), transparent 70%),
       var(--bg);
+    background-attachment: fixed;
     color: var(--text);
     font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
-  header {
-    position: sticky; top: 0;
-    display: flex; align-items: center; gap: 12px;
-    padding: 12px 16px;
-    background: rgba(13, 12, 16, 0.6);
-    backdrop-filter: blur(18px) saturate(140%);
-    -webkit-backdrop-filter: blur(18px) saturate(140%);
-    border-bottom: 1px solid var(--glass-edge);
-  }
-  header h1 { font-size: 16px; margin: 0; letter-spacing: 0.02em; }
-  header .spacer { flex: 1; }
-  main { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
-  .card {
+  button, input, select { font: inherit; color: inherit; }
+  a { color: inherit; }
+
+  /* ---- glass primitives ---- */
+  .glass {
     background: var(--glass);
     border: 1px solid var(--glass-edge);
-    border-radius: 18px;
-    padding: 20px;
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
-    margin-bottom: 16px;
   }
-  .card h2 { font-size: 15px; margin: 0 0 8px; }
-  .muted { color: var(--muted); }
-  button {
-    font: inherit; color: var(--text);
-    background: rgba(236, 72, 153, 0.2);
-    border: 1.5px solid var(--accent);
-    border-radius: 999px;
-    padding: 8px 18px;
-    cursor: pointer;
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--glass); border: 1px solid var(--glass-edge);
+    border-radius: 999px; padding: 7px 16px; cursor: pointer; white-space: nowrap;
   }
-  button:hover { background: rgba(236, 72, 153, 0.32); }
-  button.ghost { background: var(--glass); border: 1px solid var(--glass-edge); }
-  button.ghost:hover { background: rgba(255, 255, 255, 0.12); }
-  button:disabled { opacity: 0.5; cursor: default; }
-  ul.checks { list-style: none; padding: 0; margin: 8px 0 0; }
-  ul.checks li { padding: 6px 0; display: flex; gap: 10px; align-items: baseline; }
-  ul.checks li::before { content: "•"; color: var(--muted); width: 1em; text-align: center; }
-  ul.checks li.ok::before { content: "✓"; color: var(--ok); }
-  ul.checks li.err::before { content: "✕"; color: var(--err); }
-  code { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); }
+  .btn:hover { background: rgba(255, 255, 255, 0.13); }
+  .btn.primary { background: var(--accent-soft); border: 1.5px solid var(--accent); }
+  .btn.primary:hover { background: rgba(236, 72, 153, 0.32); }
+  .btn.danger { background: rgba(220, 38, 38, 0.22); border: 1px solid rgba(239, 68, 68, 0.8); }
+  .btn.danger:hover { background: rgba(220, 38, 38, 0.36); }
+  .btn:disabled { opacity: 0.45; cursor: default; }
   .icon-btn {
     width: 38px; height: 38px; padding: 0;
     display: inline-flex; align-items: center; justify-content: center;
-    border-radius: 50%;
+    border-radius: 50%; cursor: pointer;
     background: var(--glass); border: 1px solid var(--glass-edge);
     color: var(--text); text-decoration: none;
   }
   .icon-btn:hover { background: rgba(255, 255, 255, 0.14); }
+  .muted { color: var(--muted); }
+  input.field {
+    width: 100%; padding: 10px 12px; border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06); border: 1px solid var(--glass-edge); outline: none;
+  }
+  input.field:focus { border-color: var(--accent); }
+
+  /* ---- header ---- */
+  header {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px;
+    background: rgba(13, 12, 16, 0.62);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border-bottom: 1px solid var(--glass-edge);
+  }
+  header h1 { font-size: 16px; margin: 0; letter-spacing: 0.02em; white-space: nowrap; }
+  header .spacer { flex: 1; }
+  #syncState { font-size: 13px; }
   .avatar-wrap { position: relative; }
   .avatar {
-    width: 38px; height: 38px; padding: 0; border-radius: 50%;
+    width: 38px; height: 38px; padding: 0; border-radius: 50%; cursor: pointer;
     border: 1.5px solid var(--glass-edge); background: var(--glass) center / cover no-repeat;
-    color: var(--text); font-weight: 600;
+    font-weight: 600;
   }
-  .avatar:hover { border-color: var(--accent); background-color: var(--glass); }
+  .avatar:hover { border-color: var(--accent); }
   .menu {
-    position: absolute; right: 0; top: calc(100% + 8px);
+    position: absolute; right: 0; top: calc(100% + 8px); z-index: 30;
     min-width: 220px; padding: 8px;
-    background: rgba(28, 26, 34, 0.82);
+    background: var(--glass-strong);
     backdrop-filter: blur(18px) saturate(140%);
     -webkit-backdrop-filter: blur(18px) saturate(140%);
     border: 1px solid var(--glass-edge); border-radius: 14px;
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
   }
   .menu .who { padding: 8px 10px 10px; font-size: 13px; color: var(--muted); border-bottom: 1px solid var(--glass-edge); margin-bottom: 6px; overflow-wrap: anywhere; }
-  .menu button { width: 100%; text-align: left; border-radius: 10px; background: transparent; border: 0; padding: 9px 10px; }
+  .menu button { width: 100%; text-align: left; border-radius: 10px; background: transparent; border: 0; padding: 9px 10px; cursor: pointer; }
   .menu button:hover { background: rgba(255, 255, 255, 0.08); }
+
+  /* ---- layout ---- */
+  .layout { display: grid; grid-template-columns: 240px 1fr; gap: 16px; padding: 16px; max-width: 1400px; margin: 0 auto; }
+  aside { position: sticky; top: 76px; align-self: start; }
+  .album-list { display: flex; flex-direction: column; gap: 6px; }
+  .album-item {
+    display: flex; align-items: center; gap: 10px; text-align: left;
+    padding: 8px 10px; border-radius: 12px; cursor: pointer;
+    background: transparent; border: 1px solid transparent;
+  }
+  .album-item:hover { background: var(--glass); }
+  .album-item.active { background: var(--accent-soft); border-color: var(--accent); }
+  .album-item .cover {
+    width: 34px; height: 46px; border-radius: 8px; flex: none;
+    background: rgba(255, 255, 255, 0.06) center / contain no-repeat;
+  }
+  .album-item .name { font-weight: 600; font-size: 14px; }
+  .album-item .count { font-size: 12px; color: var(--muted); }
+  .new-album { margin-top: 8px; width: 100%; justify-content: center; border-style: dashed; }
+
+  .album-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .album-head h2 { margin: 0; font-size: 20px; }
+  .album-head .spacer { flex: 1; }
+
+  .dropzone {
+    border: 1.5px dashed rgba(255, 255, 255, 0.28); border-radius: 18px;
+    padding: 18px; text-align: center; margin-bottom: 16px; color: var(--muted);
+  }
+  .dropzone.over { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .card {
+    position: relative; aspect-ratio: 9 / 15; border-radius: 16px; overflow: hidden; cursor: pointer;
+    background: var(--glass); border: 1px solid var(--glass-edge);
+  }
+  .card:hover { border-color: rgba(255, 255, 255, 0.4); }
+  .card img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
+  .card .badge { position: absolute; top: 8px; right: 8px; font-size: 14px; opacity: 0.9; }
+  .card .num { position: absolute; top: 8px; left: 10px; font-size: 12px; color: var(--muted); }
+  .chip {
+    position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%);
+    max-width: 90%; padding: 3px 10px; border-radius: 999px;
+    font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  .chip.reject { background: rgba(220, 38, 38, 0.9); }
+  .chip.fail { background: rgba(217, 119, 6, 0.9); }
+  .chip.busy { background: rgba(38, 42, 51, 0.85); }
+  .card.dim img { opacity: 0.45; }
+
+  .empty { padding: 48px 16px; text-align: center; color: var(--muted); }
+  .hero { max-width: 560px; margin: 12vh auto; padding: 28px; border-radius: 22px; text-align: center; }
+  .hero h2 { margin-top: 0; }
+
+  /* ---- modal ---- */
+  .modal {
+    position: fixed; inset: 0; z-index: 40;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 6vh 16px 16px; overflow: auto;
+  }
+  .sheet {
+    width: 100%; max-width: 980px; border-radius: 20px; padding: 18px;
+    background: var(--glass-strong); border: 1px solid var(--glass-edge);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  }
+  .sheet.small { max-width: 460px; }
+  .sheet h3 { margin: 0 0 12px; font-size: 17px; }
+  .sheet .row { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 16px; }
+  .detail { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; }
+  .stage {
+    position: relative; width: 100%; aspect-ratio: 9 / 16; max-height: 76vh;
+    border-radius: 14px; overflow: hidden;
+    background: var(--stage);
+    background-image:
+      linear-gradient(45deg, rgba(0,0,0,0.06) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.06) 75%),
+      linear-gradient(45deg, rgba(0,0,0,0.06) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.06) 75%);
+    background-size: 24px 24px; background-position: 0 0, 12px 12px;
+    margin: 0 auto;
+  }
+  .stage img, .stage svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .stage img { object-fit: contain; }
+  .stage svg circle { cursor: grab; }
+  .stage svg circle.dragging { cursor: grabbing; }
+  .facts { font-size: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .facts .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .facts select { width: 100%; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--glass-edge); }
+  .facts .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chips .opt { padding: 7px 12px; border-radius: 12px; cursor: pointer; background: var(--glass); border: 1px solid var(--glass-edge); }
+  .chips .opt.on { background: var(--accent-soft); border: 1.5px solid var(--accent); }
+
+  /* ---- activity + toast ---- */
+  .activity {
+    position: fixed; right: 16px; bottom: 16px; z-index: 35; width: 320px; max-height: 50vh; overflow: auto;
+    padding: 12px; border-radius: 16px; background: var(--glass-strong); border: 1px solid var(--glass-edge);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); font-size: 13px;
+  }
+  .activity .job { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; }
+  .activity .job .st { color: var(--muted); white-space: nowrap; }
+  .toast {
+    position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 50;
+    padding: 10px 16px; border-radius: 999px; background: var(--glass-strong); border: 1px solid var(--glass-edge);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); font-size: 14px; max-width: 90vw;
+  }
   footer { text-align: center; padding: 24px 16px; font-size: 13px; color: var(--muted); }
-  footer a { color: var(--muted); }
+
+  @media (max-width: 760px) {
+    .layout { grid-template-columns: 1fr; padding: 12px; }
+    aside { position: static; }
+    .album-list { flex-direction: row; overflow-x: auto; padding-bottom: 4px; }
+    .album-item { flex: none; }
+    .new-album { width: auto; margin-top: 0; }
+    .aside-row { display: flex; gap: 8px; align-items: center; }
+    .detail { grid-template-columns: 1fr; }
+    .activity { left: 16px; width: auto; }
+    header h1 span { display: none; }
+  }
 </style>
 </head>
 <body>
 <header>
-  <h1>✦ Posey Console</h1>
+  <h1>✦ <span>Posey Console</span></h1>
   <span class="spacer"></span>
-  <button id="signin">Sign in with Google</button>
+  <span id="syncState" class="muted"></span>
+  <button id="settingsBtn" class="icon-btn" title="Settings" hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.14 12.94a7.07 7.07 0 0 0 0-1.88l2.03-1.58a.5.5 0 0 0 .12-.61l-1.92-3.32a.5.5 0 0 0-.59-.22l-2.39.96a7 7 0 0 0-1.62-.94l-.36-2.54a.5.5 0 0 0-.48-.41h-3.84a.5.5 0 0 0-.47.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.5.5 0 0 0-.59.22L2.74 8.87a.5.5 0 0 0 .12.61l2.03 1.58a7.07 7.07 0 0 0 0 1.88l-2.03 1.58a.5.5 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.5.5 0 0 0-.12-.61l-2.03-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/></svg>
+  </button>
   <a id="driveLink" class="icon-btn" href="#" target="_blank" rel="noopener" title="Open the Posey folder in Google Drive" hidden>
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true">
       <path d="M8.5 3h7l6 10.5-3.5 6H6L2.5 13.5z"/><path d="M8.5 3l6 10.5H2.5"/><path d="M15.5 3L9.4 13.5 6 19.5"/>
     </svg>
   </a>
+  <button id="signin" class="btn primary">Sign in with Google</button>
   <div class="avatar-wrap" id="account" hidden>
     <button id="avatar" class="avatar" aria-haspopup="true" aria-expanded="false" title="Account"></button>
     <div id="menu" class="menu" role="menu" hidden>
       <div class="who" id="who"></div>
+      <button id="reloadBtn" role="menuitem">Reload from Drive</button>
       <button id="signout" role="menuitem">Sign out</button>
     </div>
   </div>
 </header>
 
-<main>
-  <section class="card">
-    <h2>Connection check</h2>
-    <p class="muted">
-      Starter page. Signs in with Google and makes sure Posey can reach its
-      <strong>Posey</strong> folder in your Drive — the folder the phone app and this
-      console will sync through. Album management, cut-outs and analysis come next.
-    </p>
-    <ul class="checks" id="checks">
-      <li id="c-signin">Google sign-in</li>
-      <li id="c-drive">Drive access (drive.file)</li>
-      <li id="c-folder">Posey folder</li>
-    </ul>
-  </section>
-</main>
+<!-- Signed out -->
+<section id="welcome" class="hero glass">
+  <h2>Posey Console</h2>
+  <p class="muted">Feed pose references to the Posey camera. Drop photos in, the background
+    is removed right here in your browser, Claude checks each one and maps its body
+    keypoints, and everything syncs to the phone through your Google Drive's
+    <strong>Posey</strong> folder.</p>
+  <p><button class="btn primary" id="signin2">Sign in with Google</button></p>
+</section>
 
+<!-- Signed in -->
+<div id="app" class="layout" hidden>
+  <aside>
+    <div class="aside-row">
+      <div id="albumList" class="album-list"></div>
+      <button id="newAlbumBtn" class="btn new-album">＋ New album</button>
+    </div>
+  </aside>
+  <main>
+    <div id="loading" class="empty">Loading your library from Drive…</div>
+    <div id="albumView" hidden>
+      <div class="album-head">
+        <h2 id="albumTitle"></h2>
+        <span id="albumCount" class="muted"></span>
+        <span class="spacer"></span>
+        <button id="addBtn" class="btn primary">＋ Add images</button>
+        <button id="analyzeAllBtn" class="btn" title="Run Claude on poses without keypoints">✦ Analyse</button>
+        <button id="renameBtn" class="btn">Rename</button>
+        <button id="deleteAlbumBtn" class="btn danger">Delete</button>
+        <input id="fileInput" type="file" accept="image/*" multiple hidden>
+      </div>
+      <div id="dropzone" class="dropzone">Drop photos here — one person, head to feet, works best</div>
+      <div id="grid" class="grid"></div>
+      <div id="emptyAlbum" class="empty" hidden>No poses yet — drop photos above.</div>
+    </div>
+    <div id="noAlbums" class="empty" hidden>No albums yet. Create one with “＋ New album”, or import
+      photos in the Posey app — they appear here after the phone syncs.</div>
+  </main>
+</div>
+
+<!-- Pose detail -->
+<div id="poseModal" class="modal" hidden>
+  <div class="sheet">
+    <div class="detail">
+      <div class="stage" id="stage">
+        <img id="poseImg" alt="">
+        <svg id="kpSvg" viewBox="0 0 1080 1920" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+      <div class="facts">
+        <div><div class="label">Pose</div><div id="poseName" style="font-weight:600"></div></div>
+        <div><div class="label">Status</div><div id="poseStatus"></div></div>
+        <div><div class="label">Claude</div><div id="poseSummary" class="muted"></div></div>
+        <div class="muted" style="font-size:13px">Drag the dots to correct Claude's keypoints, then
+          save. The phone uses them for auto-fit and best-match.</div>
+        <div class="actions">
+          <button id="savePointsBtn" class="btn primary" disabled>Save points</button>
+          <button id="reanalyzeBtn" class="btn">✦ Re-analyse</button>
+          <button id="keepBtn" class="btn" hidden>Keep anyway</button>
+        </div>
+        <div><div class="label">Album</div><select id="moveSelect"></select></div>
+        <div class="actions" style="margin-top:auto">
+          <button id="deletePoseBtn" class="btn danger">Delete pose</button>
+          <button id="closePoseBtn" class="btn">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Text prompt / confirm -->
+<div id="askModal" class="modal" hidden>
+  <div class="sheet small">
+    <h3 id="askTitle"></h3>
+    <p id="askMsg" class="muted" hidden></p>
+    <input id="askInput" class="field" hidden>
+    <div class="row">
+      <button id="askCancel" class="btn">Cancel</button>
+      <button id="askOk" class="btn primary"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings -->
+<div id="settingsModal" class="modal" hidden>
+  <div class="sheet small">
+    <h3>Settings</h3>
+    <div class="facts">
+      <div>
+        <div class="label">Anthropic API key</div>
+        <input id="keyInput" class="field" type="password" placeholder="sk-ant-…" autocomplete="off">
+        <div class="muted" style="font-size:12px;margin-top:6px">Kept only in this browser
+          (localStorage). Never synced or uploaded.</div>
+      </div>
+      <div>
+        <div class="label">Claude model</div>
+        <div id="modelChips" class="chips"></div>
+      </div>
+    </div>
+    <div class="row"><button id="settingsClose" class="btn primary">Done</button></div>
+  </div>
+</div>
+
+<div id="activity" class="activity" hidden></div>
+<div id="toast" class="toast" hidden></div>
 <footer><a href="privacy.html">Privacy</a> · <span id="version"></span></footer>
 
-<script src="https://accounts.google.com/gsi/client" async defer onload="initGoogle()"></script>
-<script>
-  // Web OAuth client in the "posey-photo-taker" Cloud project (public by design).
-  const CLIENT_ID = "708106056499-vmeb6vvjvoajvpv9b3v0dq5h0r37h848.apps.googleusercontent.com";
-  // drive.file: Posey only sees files it created (here or on the phone — same project).
-  const SCOPES = "openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/drive.file";
-  // Bump on every deploy — shown in the footer to confirm the latest build is served.
-  const VERSION = "v0.2.0 · 9 Oct 2026";
-  document.getElementById("version").textContent = VERSION;
-  const FOLDER_NAME = "Posey";
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script type="module">
+// ============================================================================
+// Posey Console — manages the user's Posey library in Google Drive.
+// Data format + sync rules shared with the Android app: posey-photo-taker
+// docs/drive-format.md. Background removal runs in the browser (@imgly, AGPL —
+// this repo is public), Claude runs with the user's own key from this browser.
+// ============================================================================
+import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.128.0/+esm";
 
-  let tokenClient = null;
-  let accessToken = null;
-  const $ = (id) => document.getElementById(id);
+const VERSION = "v0.3.0 · 10 Oct 2026";   // bump on every deploy (shown in the footer)
+const CLIENT_ID = "708106056499-vmeb6vvjvoajvpv9b3v0dq5h0r37h848.apps.googleusercontent.com";
+const SCOPES = "openid https://www.googleapis.com/auth/userinfo.email " +
+  "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/drive.file";
+const BG_REMOVAL = "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm";
+const DRIVE = "https://www.googleapis.com/drive/v3/files";
+const UPLOAD = "https://www.googleapis.com/upload/drive/v3/files";
+const MODELS = [["claude-opus-5-5", "Opus 5.5"], ["claude-sonnet-5-5", "Sonnet 5.5"], ["claude-haiku-5-5", "Haiku 5.5"]];
+const FALLBACK_MODELS = new Set(["claude-opus-5-5", "claude-sonnet-5-5"]);
+const OUT_W = 1080, OUT_H = 1920;
 
-  function mark(id, state, text) {
-    const li = $(id);
-    li.className = state || "";
-    if (text) li.textContent = text;
+const $ = (id) => document.getElementById(id);
+$("version").textContent = VERSION;
+
+// ---------------------------------------------------------------- utilities
+const now = () => Date.now();
+const uuid = () => crypto.randomUUID();
+let toastTimer;
+function toast(text, ms = 3500) {
+  const t = $("toast"); t.textContent = text; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.hidden = true), ms);
+}
+const store = {
+  get key() { try { return localStorage.getItem("posey.claudeKey") || ""; } catch { return ""; } },
+  set key(v) { try { localStorage.setItem("posey.claudeKey", v); } catch {} },
+  get model() { try { return localStorage.getItem("posey.model") || MODELS[0][0]; } catch { return MODELS[0][0]; } },
+  set model(v) { try { localStorage.setItem("posey.model", v); } catch {} },
+};
+/** Run async tasks with at most `limit` at once. */
+async function pool(items, limit, fn) {
+  const out = []; let i = 0;
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (i < items.length) { const k = i++; out[k] = await fn(items[k], k); }
+  }));
+  return out;
+}
+
+// ---------------------------------------------------------------- Google auth
+let tokenClient = null, accessToken = null, me = null;
+
+function initGoogle() {
+  if (!window.google?.accounts?.oauth2) { setTimeout(initGoogle, 150); return; }
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID, scope: SCOPES,
+    callback: async (resp) => {
+      if (resp.error) { toast("Google sign-in failed: " + resp.error); return; }
+      accessToken = resp.access_token;
+      await onSignedIn();
+    },
+  });
+}
+initGoogle();
+const signIn = () => tokenClient && tokenClient.requestAccessToken({ prompt: "" });
+$("signin").onclick = signIn; $("signin2").onclick = signIn;
+
+class AuthError extends Error {}
+async function gfetch(url, opts = {}) {
+  const res = await fetch(url, { ...opts, headers: { Authorization: "Bearer " + accessToken, ...(opts.headers || {}) } });
+  if (res.status === 401) {
+    accessToken = null; $("signin").hidden = false; $("signin").textContent = "Sign in again";
+    throw new AuthError("Google session expired — sign in again");
   }
+  if (!res.ok) throw new Error(`Drive ${res.status}: ${(await res.text()).slice(0, 160)}`);
+  return res;
+}
+const gjson = async (url, opts) => (await gfetch(url, opts)).json();
 
-  function initGoogle() {
-    tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID,
-      scope: SCOPES,
-      callback: async (resp) => {
-        if (resp.error) { mark("c-signin", "err", "Google sign-in failed: " + resp.error); return; }
-        accessToken = resp.access_token;
-        $("signin").hidden = true;
-        $("account").hidden = false;
-        await runChecks();
-      },
+async function onSignedIn() {
+  $("signin").hidden = true; $("welcome").hidden = true;
+  $("account").hidden = false; $("settingsBtn").hidden = false; $("app").hidden = false;
+  try {
+    me = await gjson("https://www.googleapis.com/oauth2/v3/userinfo");
+    $("who").textContent = me.email || "";
+    const av = $("avatar");
+    if (me.picture) { av.style.backgroundImage = `url("${me.picture}")`; av.textContent = ""; }
+    else { av.textContent = (me.name || me.email || "?").trim()[0].toUpperCase(); }
+  } catch (e) { console.warn(e); }
+  await loadLibrary();
+}
+
+const menu = $("menu");
+function setMenu(open) { menu.hidden = !open; $("avatar").setAttribute("aria-expanded", String(open)); }
+$("avatar").onclick = (e) => { e.stopPropagation(); setMenu(menu.hidden); };
+document.addEventListener("click", (e) => { if (!$("account").contains(e.target)) setMenu(false); });
+$("reloadBtn").onclick = () => { setMenu(false); loadLibrary(); };
+$("signout").onclick = () => {
+  if (accessToken) google.accounts.oauth2.revoke(accessToken, () => {});
+  location.reload();
+};
+
+// ---------------------------------------------------------------- Drive layer
+const folders = { root: null, poses: null, originals: null };
+
+async function listFiles(q) {
+  const out = []; let page = "";
+  do {
+    const url = `${DRIVE}?q=${encodeURIComponent(q + " and trashed=false")}` +
+      `&fields=${encodeURIComponent("nextPageToken,files(id,name,appProperties)")}&pageSize=1000&spaces=drive` +
+      (page ? `&pageToken=${page}` : "");
+    const r = await gjson(url);
+    out.push(...(r.files || [])); page = r.nextPageToken || "";
+  } while (page);
+  return out;
+}
+async function ensureFolder(name, parent) {
+  const found = await listFiles(`name='${name}' and mimeType='application/vnd.google-apps.folder' and '${parent}' in parents`);
+  if (found.length) return found[0].id;
+  const r = await gjson(`${DRIVE}?fields=id`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, mimeType: "application/vnd.google-apps.folder", parents: [parent] }),
+  });
+  return r.id;
+}
+/** Create (no existingId) or overwrite a file; props → appProperties. */
+async function uploadFile(name, parent, mime, blob, props = {}, existingId = null) {
+  const meta = { name, mimeType: mime, appProperties: props };
+  if (!existingId) meta.parents = [parent];
+  const boundary = "posey" + Math.random().toString(36).slice(2);
+  const body = new Blob([
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n`,
+    `--${boundary}\r\nContent-Type: ${mime}\r\n\r\n`, blob, `\r\n--${boundary}--`,
+  ]);
+  const url = existingId ? `${UPLOAD}/${existingId}?uploadType=multipart&fields=id` : `${UPLOAD}?uploadType=multipart&fields=id`;
+  const r = await gjson(url, { method: existingId ? "PATCH" : "POST", headers: { "Content-Type": `multipart/related; boundary=${boundary}` }, body });
+  return r.id;
+}
+const downloadBlob = async (id) => (await gfetch(`${DRIVE}/${id}?alt=media`)).blob();
+const deleteFile = (id) => gfetch(`${DRIVE}/${id}`, { method: "DELETE" }).catch(() => {});
+
+// ---------------------------------------------------------------- library state
+let albumsDoc = { version: 1, updatedAt: 0, albums: [], deleted: { albums: {}, poses: {} } };
+let albumsFileId = null;
+const poses = new Map();     // id -> { json, files: {json,png,jpg}, url }
+let currentAlbum = null;
+
+async function loadLibrary() {
+  $("loading").hidden = false; $("albumView").hidden = true; $("noAlbums").hidden = true;
+  $("syncState").textContent = "Loading…";
+  try {
+    folders.root = await ensureFolder("Posey", "root");
+    folders.poses = await ensureFolder("poses", folders.root);
+    folders.originals = await ensureFolder("originals", folders.root);
+    $("driveLink").href = `https://drive.google.com/drive/folders/${folders.root}`;
+    $("driveLink").hidden = false;
+
+    const [albumFiles, poseFiles, origFiles] = await Promise.all([
+      listFiles(`name='albums.json' and '${folders.root}' in parents`),
+      listFiles(`'${folders.poses}' in parents`),
+      listFiles(`'${folders.originals}' in parents`),
+    ]);
+    albumsFileId = albumFiles[0]?.id || null;
+    if (albumsFileId) albumsDoc = normalizeDoc(JSON.parse(await (await downloadBlob(albumsFileId)).text()));
+
+    poses.forEach((p) => p.url && URL.revokeObjectURL(p.url));
+    poses.clear();
+    const files = {};
+    for (const f of poseFiles) {
+      const m = f.name.match(/^(.+)\.(json|png)$/); if (!m) continue;
+      (files[m[1]] ||= {})[m[2]] = f;
+    }
+    for (const f of origFiles) {
+      const m = f.name.match(/^(.+)\.jpg$/); if (m) (files[m[1]] ||= {}).jpg = f;
+    }
+    const ids = albumsDoc.albums.flatMap((a) => a.poses).filter((id) => files[id]?.json);
+    await pool(ids, 6, async (id) => {
+      const f = files[id];
+      const json = JSON.parse(await (await downloadBlob(f.json.id)).text());
+      const url = f.png ? URL.createObjectURL(await downloadBlob(f.png.id)) : null;
+      poses.set(id, { json, files: { json: f.json.id, png: f.png?.id, jpg: f.jpg?.id }, url });
     });
-  }
+    const total = albumsDoc.albums.reduce((n, a) => n + a.poses.length, 0);
+    $("syncState").textContent = `${total} pose${total === 1 ? "" : "s"} in Drive`;
+    if (!currentAlbum || !albumsDoc.albums.some((a) => a.id === currentAlbum)) currentAlbum = albumsDoc.albums[0]?.id || null;
+    render();
+  } catch (e) {
+    $("syncState").textContent = "";
+    toast(e.message, 6000);
+  } finally { $("loading").hidden = true; }
+}
 
-  async function api(url, options = {}) {
-    const res = await fetch(url, {
-      ...options,
-      headers: { Authorization: "Bearer " + accessToken, ...(options.headers || {}) },
-    });
-    if (!res.ok) throw new Error(res.status + " " + (await res.text()).slice(0, 160));
-    return res.json();
-  }
-
-  async function runChecks() {
-    try {
-      const me = await api("https://www.googleapis.com/oauth2/v3/userinfo");
-      $("who").textContent = me.email || "";
-      const av = $("avatar");
-      if (me.picture) { av.style.backgroundImage = `url("${me.picture}")`; av.textContent = ""; }
-      else { av.style.backgroundImage = ""; av.textContent = (me.name || me.email || "?").trim()[0].toUpperCase(); }
-      mark("c-signin", "ok", "Signed in as " + (me.email || "Google user"));
-    } catch (e) { mark("c-signin", "err", "Sign-in check failed: " + e.message); return; }
-
-    let folder;
-    try {
-      const q = encodeURIComponent(
-        `name='${FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
-      const list = await api(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&spaces=drive`);
-      mark("c-drive", "ok", "Drive access works");
-      folder = list.files[0];
-    } catch (e) { mark("c-drive", "err", "Drive access failed: " + e.message); return; }
-
-    try {
-      if (!folder) {
-        folder = await api("https://www.googleapis.com/drive/v3/files?fields=id,name", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: FOLDER_NAME, mimeType: "application/vnd.google-apps.folder" }),
-        });
-        mark("c-folder", "ok", "Created the Posey folder in your Drive");
-      } else {
-        const q = encodeURIComponent(`'${folder.id}' in parents and trashed=false`);
-        const items = await api(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&pageSize=1000`);
-        mark("c-folder", "ok", `Posey folder ready — ${items.files.length} item(s)`);
-      }
-      $("driveLink").href = `https://drive.google.com/drive/folders/${folder.id}`;
-      $("driveLink").hidden = false;
-    } catch (e) { mark("c-folder", "err", "Folder step failed: " + e.message); }
-  }
-
-  $("signin").onclick = () => tokenClient && tokenClient.requestAccessToken({ prompt: "" });
-  const menu = $("menu");
-  function setMenu(open) { menu.hidden = !open; $("avatar").setAttribute("aria-expanded", String(open)); }
-  $("avatar").onclick = (e) => { e.stopPropagation(); setMenu(menu.hidden); };
-  document.addEventListener("click", (e) => { if (!$("account").contains(e.target)) setMenu(false); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") setMenu(false); });
-
-  $("signout").onclick = () => {
-    if (accessToken) google.accounts.oauth2.revoke(accessToken, () => {});
-    accessToken = null;
-    setMenu(false);
-    $("who").textContent = "";
-    $("signin").hidden = false;
-    $("account").hidden = true;
-    $("driveLink").hidden = true;
-    ["c-signin", "c-drive", "c-folder"].forEach((id, i) =>
-      mark(id, "", ["Google sign-in", "Drive access (drive.file)", "Posey folder"][i]));
+function normalizeDoc(d) {
+  return {
+    version: 1, updatedAt: d.updatedAt || 0,
+    albums: (d.albums || []).map((a) => ({ id: a.id, name: a.name, updatedAt: a.updatedAt || 0, poses: a.poses || [] })),
+    deleted: { albums: { ...(d.deleted?.albums || {}) }, poses: { ...(d.deleted?.poses || {}) } },
   };
+}
+
+/** Same merge as the app's PoseySync: union by id, newer album wins name/order, other side's poses appended. */
+function mergeDocs(a, b) {
+  const delA = { ...a.deleted.albums }, delP = { ...a.deleted.poses };
+  for (const [k, v] of Object.entries(b.deleted.albums)) delA[k] = Math.max(delA[k] || 0, v);
+  for (const [k, v] of Object.entries(b.deleted.poses)) delP[k] = Math.max(delP[k] || 0, v);
+  const byId = new Map();
+  for (const al of [...a.albums, ...b.albums]) {
+    if (delA[al.id]) continue;
+    const other = byId.get(al.id);
+    if (!other) { byId.set(al.id, { ...al, poses: [...al.poses] }); continue; }
+    const [win, lose] = al.updatedAt >= other.updatedAt ? [al, other] : [other, al];
+    byId.set(al.id, { ...win, poses: [...win.poses, ...lose.poses.filter((p) => !win.poses.includes(p))] });
+  }
+  const albums = [...byId.values()].map((al) => ({ ...al, poses: [...new Set(al.poses.filter((p) => !delP[p]))] }));
+  return { version: 1, updatedAt: Math.max(0, ...albums.map((x) => x.updatedAt)), albums, deleted: { albums: delA, poses: delP } };
+}
+
+/** Write albums.json, merging with whatever the phone wrote meanwhile. */
+async function saveAlbums() {
+  let remote = null;
+  const found = await listFiles(`name='albums.json' and '${folders.root}' in parents`);
+  albumsFileId = found[0]?.id || null;
+  if (albumsFileId) remote = normalizeDoc(JSON.parse(await (await downloadBlob(albumsFileId)).text()));
+  albumsDoc = remote ? mergeDocs(albumsDoc, remote) : albumsDoc;
+  const blob = new Blob([JSON.stringify(albumsDoc, null, 2)], { type: "application/json" });
+  albumsFileId = await uploadFile("albums.json", folders.root, "application/json", blob, {}, albumsFileId);
+}
+
+/** Upload a pose's JSON (stamped now, source console) — the phone pulls it on its next sync. */
+async function savePoseJson(id) {
+  const p = poses.get(id);
+  p.json.updatedAt = now(); p.json.source = "console";
+  const blob = new Blob([JSON.stringify(p.json, null, 2)], { type: "application/json" });
+  p.files.json = await uploadFile(`${id}.json`, folders.poses, "application/json", blob,
+    { updatedAt: String(p.json.updatedAt) }, p.files.json || null);
+}
+
+const album = () => albumsDoc.albums.find((a) => a.id === currentAlbum);
+const touchAlbum = (al) => { al.updatedAt = now(); };
+
+// ---------------------------------------------------------------- rendering
+function render() {
+  const list = $("albumList"); list.innerHTML = "";
+  for (const al of albumsDoc.albums) {
+    const ready = al.poses.filter((id) => poses.get(id)?.json.status === "READY").length;
+    const coverId = al.poses.find((id) => poses.get(id)?.url);
+    const b = document.createElement("button");
+    b.className = "album-item" + (al.id === currentAlbum ? " active" : "");
+    b.innerHTML = `<span class="cover"></span><span><div class="name"></div><div class="count"></div></span>`;
+    if (coverId) b.querySelector(".cover").style.backgroundImage = `url("${poses.get(coverId).url}")`;
+    b.querySelector(".name").textContent = al.name;
+    b.querySelector(".count").textContent = `${ready} pose${ready === 1 ? "" : "s"}`;
+    b.onclick = () => { currentAlbum = al.id; render(); };
+    list.appendChild(b);
+  }
+  const al = album();
+  $("noAlbums").hidden = !!al; $("albumView").hidden = !al;
+  if (!al) return;
+  $("albumTitle").textContent = al.name;
+  $("albumCount").textContent = `${al.poses.length} item${al.poses.length === 1 ? "" : "s"}`;
+  const grid = $("grid"); grid.innerHTML = "";
+  al.poses.forEach((id, i) => {
+    const p = poses.get(id);
+    const card = document.createElement("div");
+    card.className = "card";
+    const st = p?.json.status || "PROCESSING";
+    if (st !== "READY") card.classList.add("dim");
+    card.innerHTML = `<span class="num">${String(i + 1).padStart(2, "0")}</span>` +
+      (p?.url ? `<img alt="" loading="lazy">` : "") +
+      (p?.json.analysis && st === "READY" ? `<span class="badge" title="Keypoints ready">✦</span>` : "");
+    if (p?.url) card.querySelector("img").src = p.url;
+    const chip = statusChip(p, id);
+    if (chip) card.appendChild(chip);
+    card.onclick = () => p && openPose(id);
+    grid.appendChild(card);
+  });
+  $("emptyAlbum").hidden = al.poses.length > 0;
+}
+
+function statusChip(p, id) {
+  const job = jobs.get(id);
+  let cls = null, text = null;
+  if (job && job.state !== "done") { cls = "busy"; text = job.state; }
+  else if (!p) { cls = "busy"; text = "On the phone…"; }
+  else if (p.json.status === "REJECTED") { cls = "reject"; text = "✕ " + (p.json.note || "Rejected"); }
+  else if (p.json.status === "FAILED") { cls = "fail"; text = "! " + (p.json.note || "Failed"); }
+  else if (!p.json.analysis) { cls = "busy"; text = "Not analysed"; }
+  if (!cls) return null;
+  const c = document.createElement("span"); c.className = "chip " + cls; c.textContent = text;
+  return c;
+}
+
+// ---------------------------------------------------------------- dialogs
+function ask({ title, message = null, input = null, ok = "OK", danger = false }) {
+  return new Promise((resolve) => {
+    $("askTitle").textContent = title;
+    $("askMsg").hidden = !message; $("askMsg").textContent = message || "";
+    $("askInput").hidden = input === null; $("askInput").value = input || "";
+    $("askOk").textContent = ok; $("askOk").className = "btn " + (danger ? "danger" : "primary");
+    $("askModal").hidden = false;
+    if (input !== null) setTimeout(() => $("askInput").focus(), 30);
+    const done = (v) => { $("askModal").hidden = true; resolve(v); };
+    $("askOk").onclick = () => done(input === null ? true : $("askInput").value.trim());
+    $("askCancel").onclick = () => done(null);
+    $("askInput").onkeydown = (e) => { if (e.key === "Enter") $("askOk").click(); if (e.key === "Escape") done(null); };
+  });
+}
+for (const id of ["askModal", "settingsModal", "poseModal"]) {
+  $(id).addEventListener("click", (e) => { if (e.target === $(id)) ($(id === "askModal" ? "askCancel" : id === "poseModal" ? "closePoseBtn" : "settingsClose")).click(); });
+}
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  setMenu(false);
+  if (!$("poseModal").hidden) $("closePoseBtn").click();
+  if (!$("settingsModal").hidden) $("settingsClose").click();
+});
+
+// ---------------------------------------------------------------- albums
+$("newAlbumBtn").onclick = async () => {
+  const name = await ask({ title: "New album", input: "", ok: "Create" });
+  if (!name) return;
+  const al = { id: uuid(), name, updatedAt: now(), poses: [] };
+  albumsDoc.albums.push(al); currentAlbum = al.id; render();
+  try { await saveAlbums(); render(); } catch (e) { toast(e.message); }
+};
+$("renameBtn").onclick = async () => {
+  const al = album(); if (!al) return;
+  const name = await ask({ title: "Rename album", input: al.name, ok: "Save" });
+  if (!name || name === al.name) return;
+  al.name = name; touchAlbum(al); render();
+  try { await saveAlbums(); render(); } catch (e) { toast(e.message); }
+};
+$("deleteAlbumBtn").onclick = async () => {
+  const al = album(); if (!al) return;
+  const n = al.poses.length;
+  const okd = await ask({
+    title: `Delete “${al.name}”?`, danger: true, ok: "Delete album",
+    message: n ? `Its ${n} pose${n === 1 ? "" : "s"} will be deleted from Drive and, after its next sync, from the phone.` : null,
+  });
+  if (!okd) return;
+  const t = now();
+  albumsDoc.deleted.albums[al.id] = t;
+  for (const id of al.poses) {
+    albumsDoc.deleted.poses[id] = t;
+    const p = poses.get(id);
+    if (p) { for (const f of Object.values(p.files)) if (f) deleteFile(f); poses.delete(id); }
+  }
+  albumsDoc.albums = albumsDoc.albums.filter((x) => x.id !== al.id);
+  currentAlbum = albumsDoc.albums[0]?.id || null; render();
+  try { await saveAlbums(); toast("Album deleted"); } catch (e) { toast(e.message); }
+};
+
+// ---------------------------------------------------------------- settings
+function renderModels() {
+  const box = $("modelChips"); box.innerHTML = "";
+  for (const [id, label] of MODELS) {
+    const b = document.createElement("button");
+    b.className = "opt" + (store.model === id ? " on" : ""); b.textContent = label;
+    b.onclick = () => { store.model = id; renderModels(); };
+    box.appendChild(b);
+  }
+}
+$("settingsBtn").onclick = () => { $("keyInput").value = store.key; renderModels(); $("settingsModal").hidden = false; };
+$("settingsClose").onclick = () => { store.key = $("keyInput").value.trim(); $("settingsModal").hidden = true; };
+
+// ---------------------------------------------------------------- Claude (same prompt + schema as the app)
+const NAMES = ["head_top", "nose", "neck", "left_shoulder", "right_shoulder", "left_elbow", "right_elbow",
+  "left_wrist", "right_wrist", "left_hip", "right_hip", "left_knee", "right_knee", "left_ankle", "right_ankle", "ground"];
+const BONES = [["head_top","nose"],["nose","neck"],["neck","left_shoulder"],["neck","right_shoulder"],
+  ["left_shoulder","left_elbow"],["left_elbow","left_wrist"],["right_shoulder","right_elbow"],["right_elbow","right_wrist"],
+  ["left_shoulder","left_hip"],["right_shoulder","right_hip"],["left_hip","right_hip"],
+  ["left_hip","left_knee"],["left_knee","left_ankle"],["right_hip","right_knee"],["right_knee","right_ankle"]];
+const SYSTEM_PROMPT = `You locate human body keypoints in photos for a pose-matching camera app.
+Give each point as fractions of the image: x from 0 (left edge) to 1 (right edge),
+y from 0 (top edge) to 1 (bottom edge). A faint labelled grid every 0.1 is drawn
+on the image to help you measure; use it.
+"left_*" and "right_*" mean the side of the IMAGE the point appears on, not the
+person's own left or right.
+head_top: the top of the skull. Ignore hats and voluminous hair — estimate where
+the skull would be.
+ground: the point midway between the feet at the very bottom of the soles, where
+the person meets the floor.
+wrist points stand in for the hands.
+Set visible to false for points outside the frame or completely hidden, but still
+give your best estimate. summary: one short sentence describing the pose (stance,
+arms, weight, facing direction).
+subject: is_human is false for objects, animals, drawings, mannequins and empty
+scenes; people_count counts every person visible; full_body is true only when the
+whole body from head top to feet is inside the image.`;
+const ASK = "This is a candidate pose-reference photo, usually with the background removed " +
+  "(grey). First fill in subject: is it a real person, how many people are " +
+  "visible, and is the whole body from the top of the head to the feet inside " +
+  "the image? Then locate the main person's body keypoints.";
+const point = { type: "object", properties: { x: { type: "number" }, y: { type: "number" }, visible: { type: "boolean" } },
+  required: ["x", "y", "visible"], additionalProperties: false };
+const SCHEMA = {
+  type: "object",
+  properties: {
+    points: { type: "object", properties: Object.fromEntries(NAMES.map((n) => [n, point])), required: NAMES, additionalProperties: false },
+    summary: { type: "string" },
+    subject: { type: "object", properties: { is_human: { type: "boolean" }, people_count: { type: "integer" }, full_body: { type: "boolean" } },
+      required: ["is_human", "people_count", "full_body"], additionalProperties: false },
+  },
+  required: ["subject", "points", "summary"], additionalProperties: false,
+};
+
+function rejectReason(s) {
+  if (!s) return null;
+  if (!s.is_human || s.people_count === 0) return "Not a person";
+  if (s.people_count > 1) return "More than one person";
+  if (!s.full_body) return "No full body";
+  return null;
+}
+
+/** Downscale to ≤768, grey background, 0.1 measuring grid, JPEG base64 (like the app). */
+async function claudeJpeg(img) {
+  const s = Math.min(1, 768 / Math.max(img.width, img.height));
+  const w = Math.max(1, Math.round(img.width * s)), h = Math.max(1, Math.round(img.height * s));
+  const c = new OffscreenCanvas(w, h), g = c.getContext("2d");
+  g.fillStyle = "#7E858F"; g.fillRect(0, 0, w, h); g.drawImage(img, 0, 0, w, h);
+  g.strokeStyle = "rgba(255,255,0,0.27)"; g.lineWidth = 1;
+  g.fillStyle = "rgba(255,255,0,0.78)"; g.font = `${Math.max(10, w / 40)}px sans-serif`;
+  for (let i = 1; i <= 9; i++) {
+    const fx = w * i / 10, fy = h * i / 10;
+    g.beginPath(); g.moveTo(fx, 0); g.lineTo(fx, h); g.moveTo(0, fy); g.lineTo(w, fy); g.stroke();
+    g.fillText(`0.${i}`, fx + 2, Math.max(10, w / 40)); g.fillText(`0.${i}`, 2, fy - 2);
+  }
+  const blob = await c.convertToBlob({ type: "image/jpeg", quality: 0.8 });
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let bin = ""; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+
+async function analyseWithClaude(img) {
+  if (!store.key) throw new Error("Add your Anthropic API key in Settings (⚙)");
+  const client = new Anthropic({ apiKey: store.key, dangerouslyAllowBrowser: true });
+  const model = store.model;
+  const body = {
+    model, max_tokens: 16000, system: SYSTEM_PROMPT,
+    output_config: { effort: "medium", format: { type: "json_schema", schema: SCHEMA } },
+    messages: [{ role: "user", content: [
+      { type: "image", source: { type: "base64", media_type: "image/jpeg", data: await claudeJpeg(img) } },
+      { type: "text", text: ASK },
+    ] }],
+  };
+  const opts = {};
+  if (FALLBACK_MODELS.has(model)) {   // server-side fallback if a safety classifier declines
+    body.fallbacks = "default";
+    opts.headers = { "anthropic-beta": "server-side-fallback-2026-07-01" };
+  }
+  const res = await client.messages.create(body, opts);
+  if (res.stop_reason === "refusal") throw new Error("Claude declined to analyse this image");
+  const text = res.content.find((b) => b.type === "text")?.text;
+  if (!text) throw new Error("Empty response from Claude");
+  const o = JSON.parse(text);
+  const points = {};
+  for (const n of NAMES) {
+    const p = o.points?.[n];
+    if (!p || p.visible === false || !Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
+    points[n] = [Math.min(1, Math.max(0, p.x)), Math.min(1, Math.max(0, p.y))];
+  }
+  return { summary: o.summary || "", subject: o.subject || null, points };
+}
+
+/** Lowest opaque row of the cut-out → ground y (soles), like the app. */
+function alphaBottom(canvas) {
+  const g = canvas.getContext("2d"), { width: w, height: h } = canvas;
+  const data = g.getImageData(0, 0, w, h).data;
+  for (let y = h - 1; y >= 0; y--) for (let x = 0; x < w; x++) if (data[(y * w + x) * 4 + 3] > 40) return (y + 1) / h;
+  return null;
+}
+function refineGround(analysis, canvas) {
+  const bottom = alphaBottom(canvas); if (bottom == null) return analysis;
+  const p = analysis.points;
+  const gx = p.ground ? p.ground[0] : [p.left_ankle, p.right_ankle].filter(Boolean).reduce((s, a, _, arr) => s + a[0] / arr.length, 0);
+  if (!gx) return analysis;
+  return { ...analysis, points: { ...p, ground: [gx, bottom] } };
+}
+
+// ---------------------------------------------------------------- import pipeline
+const jobs = new Map();   // poseId -> { name, state }
+function renderActivity() {
+  const box = $("activity");
+  const list = [...jobs.entries()];
+  box.hidden = list.length === 0;
+  box.innerHTML = `<div style="font-weight:600;margin-bottom:6px">Importing</div>` +
+    list.map(([, j]) => `<div class="job"><span>${j.name.replace(/[<>&]/g, "")}</span><span class="st">${j.state}</span></div>`).join("");
+}
+function setJob(id, state) {
+  const j = jobs.get(id); if (!j) return;
+  j.state = state; renderActivity(); render();
+  if (state === "done") setTimeout(() => { jobs.delete(id); renderActivity(); render(); }, 2500);
+}
+
+let removeBackground = null;
+async function cutOut(blob) {
+  if (!removeBackground) ({ removeBackground } = await import(BG_REMOVAL));
+  return removeBackground(blob, { output: { format: "image/png" } });
+}
+
+/** Crop to opaque pixels, then frame like the bundled poses: 1080×1920, ~90% tall, feet near the bottom. */
+async function frameCutout(pngBlob) {
+  const img = await createImageBitmap(pngBlob);
+  const tmp = new OffscreenCanvas(img.width, img.height), tg = tmp.getContext("2d");
+  tg.drawImage(img, 0, 0);
+  const d = tg.getImageData(0, 0, img.width, img.height).data;
+  let x0 = img.width, y0 = img.height, x1 = -1, y1 = -1;
+  for (let y = 0; y < img.height; y++) for (let x = 0; x < img.width; x++) {
+    if (d[(y * img.width + x) * 4 + 3] > 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  if (x1 < 0) return null;
+  const sw = x1 - x0 + 1, sh = y1 - y0 + 1;
+  const s = Math.min(OUT_H * 0.90 / sh, OUT_W * 0.92 / sw);
+  const w = sw * s, h = sh * s, left = (OUT_W - w) / 2, top = OUT_H * 0.96 - h;
+  const out = document.createElement("canvas"); out.width = OUT_W; out.height = OUT_H;
+  const g = out.getContext("2d"); g.imageSmoothingQuality = "high";
+  g.drawImage(img, x0, y0, sw, sh, left, top, w, h);
+  return out;
+}
+
+async function downscaleOriginal(file) {
+  const img = await createImageBitmap(file, { imageOrientation: "from-image" });
+  const s = Math.min(1, 2048 / Math.max(img.width, img.height));
+  const c = new OffscreenCanvas(Math.round(img.width * s), Math.round(img.height * s));
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return c.convertToBlob({ type: "image/jpeg", quality: 0.9 });
+}
+
+async function importFiles(fileList) {
+  const al = album(); if (!al) { toast("Create an album first"); return; }
+  const files = [...fileList].filter((f) => f.type.startsWith("image/"));
+  if (!files.length) return;
+  if (!store.key) toast("No Claude key — images are cut out but not checked or analysed. Add one in Settings.", 6000);
+  const items = files.map((f) => ({ id: uuid(), file: f }));
+  for (const it of items) jobs.set(it.id, { name: it.file.name, state: "Queued" });
+  renderActivity();
+  for (const it of items) {               // one at a time: the cut-out model is memory-hungry
+    try { await importOne(al, it.id, it.file); }
+    catch (e) { setJob(it.id, "Failed: " + e.message.slice(0, 60)); console.error(e); }
+  }
+}
+
+async function importOne(al, id, file) {
+  setJob(id, "Reading…");
+  const original = await downscaleOriginal(file);
+  setJob(id, "Removing background…");
+  let framed;
+  try { framed = await frameCutout(await cutOut(original)); }
+  catch (e) { console.warn("background removal failed", e); }
+  const t = now();
+  const json = { id, status: "READY", note: "", createdAt: t, updatedAt: t, source: "console", analysis: null };
+  if (!framed) { json.status = "REJECTED"; json.note = "No subject found"; framed = await frameCutout(original); }
+
+  if (json.status === "READY" && store.key) {
+    setJob(id, "Checking with Claude…");
+    try {
+      const a = refineGround(await analyseWithClaude(framed), framed);
+      const reason = rejectReason(a.subject);
+      if (reason) { json.status = "REJECTED"; json.note = reason; }
+      json.analysis = a;
+    } catch (e) { json.status = "FAILED"; json.note = e.message.slice(0, 120); }
+  } else if (json.status === "READY") json.note = "Not analysed";
+
+  setJob(id, "Uploading…");
+  const png = await new Promise((r) => framed.toBlob(r, "image/png"));
+  json.updatedAt = now();
+  const props = { updatedAt: String(json.updatedAt) };
+  const files = {
+    png: await uploadFile(`${id}.png`, folders.poses, "image/png", png, props),
+    jpg: await uploadFile(`${id}.jpg`, folders.originals, "image/jpeg", original, props),
+  };
+  files.json = await uploadFile(`${id}.json`, folders.poses, "application/json",
+    new Blob([JSON.stringify(json, null, 2)], { type: "application/json" }), props);
+  poses.set(id, { json, files, url: URL.createObjectURL(png) });
+  const target = albumsDoc.albums.find((a) => a.id === al.id);
+  if (target) { target.poses.push(id); touchAlbum(target); }
+  await saveAlbums();
+  setJob(id, json.status === "READY" ? "done" : json.status === "REJECTED" ? "✕ " + json.note : "! failed");
+  if (json.status !== "READY") setTimeout(() => { jobs.delete(id); renderActivity(); render(); }, 5000);
+}
+
+$("addBtn").onclick = () => $("fileInput").click();
+$("fileInput").onchange = (e) => { importFiles(e.target.files); e.target.value = ""; };
+const dz = $("dropzone");
+for (const ev of ["dragenter", "dragover"]) document.addEventListener(ev, (e) => { if (!$("app").hidden) { e.preventDefault(); dz.classList.add("over"); } });
+for (const ev of ["dragleave", "drop"]) document.addEventListener(ev, (e) => { if (ev === "dragleave" && e.relatedTarget) return; dz.classList.remove("over"); });
+document.addEventListener("drop", (e) => { if ($("app").hidden) return; e.preventDefault(); importFiles(e.dataTransfer.files); });
+
+$("analyzeAllBtn").onclick = async () => {
+  const al = album(); if (!al) return;
+  if (!store.key) { toast("Add your Anthropic API key in Settings (⚙)"); $("settingsBtn").click(); return; }
+  const todo = al.poses.filter((id) => { const p = poses.get(id); return p && p.url && !p.json.analysis && p.json.status !== "REJECTED"; });
+  if (!todo.length) { toast("Every pose here already has keypoints"); return; }
+  for (const id of todo) jobs.set(id, { name: `Pose ${al.poses.indexOf(id) + 1}`, state: "Queued" });
+  renderActivity();
+  for (const id of todo) {
+    try { await reanalyse(id); setJob(id, "done"); }
+    catch (e) { setJob(id, "Failed: " + e.message.slice(0, 60)); }
+  }
+};
+
+async function reanalyse(id) {
+  const p = poses.get(id);
+  setJob(id, "Checking with Claude…");
+  const img = await createImageBitmap(await (await fetch(p.url)).blob());
+  const c = document.createElement("canvas"); c.width = img.width; c.height = img.height;
+  c.getContext("2d").drawImage(img, 0, 0);
+  const a = refineGround(await analyseWithClaude(c), c);
+  p.json.analysis = a;
+  const reason = rejectReason(a.subject);
+  if (reason && p.json.note !== "Kept anyway") { p.json.status = "REJECTED"; p.json.note = reason; }
+  else if (p.json.status !== "READY") { p.json.status = "READY"; p.json.note = ""; }
+  await savePoseJson(id);
+}
+
+// ---------------------------------------------------------------- pose detail + keypoint editor
+let openId = null, editPoints = null, dirty = false;
+
+function openPose(id) {
+  const p = poses.get(id); openId = id; dirty = false;
+  const al = album();
+  $("poseImg").src = p.url || "";
+  $("poseName").textContent = `${al?.name || ""} ${String((al?.poses.indexOf(id) ?? 0) + 1).padStart(2, "0")}`;
+  const st = p.json.status;
+  $("poseStatus").innerHTML = "";
+  const s = document.createElement("span");
+  s.textContent = st === "READY" ? "Ready" + (p.json.note ? ` · ${p.json.note}` : "") : `${st === "REJECTED" ? "✕ Rejected" : "! Failed"} — ${p.json.note}`;
+  s.style.color = st === "READY" ? "var(--ok)" : st === "REJECTED" ? "var(--err)" : "var(--warn)";
+  $("poseStatus").appendChild(s);
+  const a = p.json.analysis;
+  $("poseSummary").textContent = a ? (a.summary || "—") + (a.manual ? " (points edited)" : "") : "Not analysed yet";
+  editPoints = a ? JSON.parse(JSON.stringify(a.points)) : null;
+  $("keepBtn").hidden = st === "READY";
+  $("savePointsBtn").disabled = true;
+  const sel = $("moveSelect"); sel.innerHTML = "";
+  for (const x of albumsDoc.albums) { const o = new Option(x.name, x.id, false, x.id === currentAlbum); sel.add(o); }
+  drawPoints();
+  $("poseModal").hidden = false;
+}
+
+function drawPoints() {
+  const svg = $("kpSvg"); svg.innerHTML = "";
+  if (!editPoints) return;
+  const P = (n) => editPoints[n] && [editPoints[n][0] * OUT_W, editPoints[n][1] * OUT_H];
+  const NS = "http://www.w3.org/2000/svg";
+  for (const [a, b] of BONES) {
+    const p = P(a), q = P(b); if (!p || !q) continue;
+    const l = document.createElementNS(NS, "line");
+    l.setAttribute("x1", p[0]); l.setAttribute("y1", p[1]); l.setAttribute("x2", q[0]); l.setAttribute("y2", q[1]);
+    l.setAttribute("stroke", "rgba(236,72,153,0.85)"); l.setAttribute("stroke-width", "7"); l.setAttribute("stroke-linecap", "round");
+    svg.appendChild(l);
+  }
+  for (const n of Object.keys(editPoints)) {
+    const [x, y] = P(n);
+    const c = document.createElementNS(NS, "circle");
+    c.setAttribute("cx", x); c.setAttribute("cy", y);
+    c.setAttribute("r", n === "head_top" || n === "ground" ? 18 : 13);
+    c.setAttribute("fill", "#fff"); c.setAttribute("stroke", "#ec4899"); c.setAttribute("stroke-width", "5");
+    const t = document.createElementNS(NS, "title"); t.textContent = n.replace("_", " "); c.appendChild(t);
+    c.addEventListener("pointerdown", (e) => startDrag(e, n, c));
+    svg.appendChild(c);
+  }
+}
+
+function startDrag(e, name, el) {
+  e.preventDefault();
+  const svg = $("kpSvg");
+  el.setPointerCapture(e.pointerId); el.classList.add("dragging");
+  const move = (ev) => {
+    const pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
+    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    editPoints[name] = [Math.min(1, Math.max(0, p.x / OUT_W)), Math.min(1, Math.max(0, p.y / OUT_H))];
+    dirty = true; $("savePointsBtn").disabled = false;
+    drawPoints();
+  };
+  const up = () => { el.removeEventListener("pointermove", move); el.removeEventListener("pointerup", up); };
+  el.addEventListener("pointermove", move); el.addEventListener("pointerup", up);
+}
+
+$("savePointsBtn").onclick = async () => {
+  const p = poses.get(openId); if (!p || !editPoints) return;
+  p.json.analysis = { ...(p.json.analysis || {}), points: editPoints, manual: true };
+  $("savePointsBtn").disabled = true;
+  try { await savePoseJson(openId); dirty = false; toast("Keypoints saved — the phone picks them up on its next sync"); render(); }
+  catch (e) { toast(e.message); $("savePointsBtn").disabled = false; }
+};
+$("reanalyzeBtn").onclick = async () => {
+  if (!store.key) { toast("Add your Anthropic API key in Settings (⚙)"); return; }
+  const id = openId; $("reanalyzeBtn").disabled = true; jobs.set(id, { name: "Re-analyse", state: "Queued" }); renderActivity();
+  try { await reanalyse(id); setJob(id, "done"); if (openId === id) openPose(id); }
+  catch (e) { setJob(id, "Failed: " + e.message.slice(0, 60)); toast(e.message); }
+  finally { $("reanalyzeBtn").disabled = false; }
+};
+$("keepBtn").onclick = async () => {
+  const p = poses.get(openId); p.json.status = "READY"; p.json.note = "Kept anyway";
+  try { await savePoseJson(openId); openPose(openId); render(); } catch (e) { toast(e.message); }
+};
+$("moveSelect").onchange = async (e) => {
+  const to = albumsDoc.albums.find((a) => a.id === e.target.value), from = album();
+  if (!to || !from || to.id === from.id) return;
+  from.poses = from.poses.filter((x) => x !== openId); touchAlbum(from);
+  to.poses.push(openId); touchAlbum(to);
+  $("poseModal").hidden = true; render();
+  try { await saveAlbums(); toast(`Moved to ${to.name}`); } catch (er) { toast(er.message); }
+};
+$("deletePoseBtn").onclick = async () => {
+  const okd = await ask({ title: "Delete this pose?", message: "It's removed from Drive and, after its next sync, from the phone.", ok: "Delete", danger: true });
+  if (!okd) return;
+  const id = openId, p = poses.get(id), al = album();
+  $("poseModal").hidden = true;
+  albumsDoc.deleted.poses[id] = now();
+  if (al) { al.poses = al.poses.filter((x) => x !== id); touchAlbum(al); }
+  for (const f of Object.values(p.files)) if (f) deleteFile(f);
+  if (p.url) URL.revokeObjectURL(p.url);
+  poses.delete(id); render();
+  try { await saveAlbums(); toast("Pose deleted"); } catch (e) { toast(e.message); }
+};
+$("closePoseBtn").onclick = async () => {
+  if (dirty && !(await ask({ title: "Discard keypoint changes?", ok: "Discard", danger: true }))) return;
+  $("poseModal").hidden = true; openId = null;
+};
 </script>
 </body>
 </html>
