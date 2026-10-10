@@ -4,26 +4,68 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Posey Privacy</title>
+<meta name="theme-color" content="#0d0c10">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 108 108'%3E%3Crect width='108' height='108' rx='26' fill='%231A1523'/%3E%3Cg transform='translate(0 2)'%3E%3Ccircle cx='54' cy='30' r='7' fill='%23fff'/%3E%3Cpath fill='%23fff' d='M50 40C46 41 44 45 44 50L44 60 42 74 47 74 49 61 51 61 51 80 56 80 56 61 58 61 60 74 65 74 63 60 63 52 69 58 72 55 64 47C62 43 59 40 55 40Z'/%3E%3Cpath fill='%23EC4899' d='M44 52 36 50 34 56 44 60Z'/%3E%3C/g%3E%3C/svg%3E">
 <style>
-  :root { --bg: #0d0c10; --text: #f4f2f7; --muted: rgba(244, 242, 247, 0.65); }
-  body { margin: 0; background: var(--bg); color: var(--text);
-         font: 15px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  :root {
+    --bg: #0d0c10; --text: #f4f2f7; --muted: rgba(244, 242, 247, 0.65);
+    --glass: rgba(255, 255, 255, 0.07); --glass-edge: rgba(255, 255, 255, 0.16); --accent: #ec4899;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--text);
+    background:
+      radial-gradient(60vw 50vh at 15% 0%, rgba(236, 72, 153, 0.14), transparent 70%),
+      var(--bg);
+    background-attachment: fixed;
+    font: 15px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  /* Same frosted app bar as the console, so the page feels part of Posey. */
+  header {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+    background: rgba(13, 12, 16, 0.62);
+    backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border-bottom: 1px solid var(--glass-edge);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; text-decoration: none; color: inherit; }
+  .brand svg { width: 30px; height: 30px; border-radius: 8px; box-shadow: 0 0 0 1px rgba(255,255,255,0.12); }
+  .brand em { font-style: normal; font-weight: 500; color: var(--muted); }
+  .spacer { flex: 1; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; border-radius: 999px;
+    background: var(--glass); border: 1px solid var(--glass-edge); color: var(--text); text-decoration: none;
+  }
+  .btn:hover { background: rgba(255, 255, 255, 0.13); }
   main { max-width: 680px; margin: 0 auto; padding: 32px 16px 48px; }
-  h1 { font-size: 22px; } h2 { font-size: 16px; margin-top: 28px; }
+  h1 { font-size: 26px; margin: 8px 0 4px; } h2 { font-size: 16px; margin-top: 28px; }
+  .updated { color: var(--muted); font-size: 13px; margin: 0 0 20px; }
   p, li { color: var(--muted); }
   a { color: var(--text); }
+  code { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; }
+  @media (max-width: 520px) { .brand em { display: none; } }
 </style>
 </head>
 <body>
+<header>
+  <a class="brand" href="./" title="Posey Console">
+    <svg viewBox="0 0 108 108" aria-hidden="true"><rect width="108" height="108" rx="26" fill="#1A1523"/><g transform="translate(0 2)"><circle cx="54" cy="30" r="7" fill="#fff"/><path fill="#fff" d="M50 40C46 41 44 45 44 50L44 60 42 74 47 74 49 61 51 61 51 80 56 80 56 61 58 61 60 74 65 74 63 60 63 52 69 58 72 55 64 47C62 43 59 40 55 40Z"/><path fill="#EC4899" d="M44 52 36 50 34 56 44 60Z"/></g></svg>
+    <span>Posey <em>Console</em></span>
+  </a>
+  <span class="spacer"></span>
+  <a class="btn" href="./">← Back to Posey</a>
+</header>
+
 <main>
-  <h1>Posey — Privacy</h1>
+  <h1>Privacy</h1>
+  <p class="updated">Last updated 10 October 2026</p>
   <p>Posey is a personal tool: an Android camera that overlays pose guides, and this web
   console for managing those guides. It is operated by its author for their own use.</p>
 
   <h2>Google account data</h2>
   <ul>
-    <li>Posey asks for your email address (to show who is signed in) and the
-      <code>drive.file</code> permission.</li>
+    <li>Posey asks for your email address, name and profile photo (to show who is signed
+      in) and the <code>drive.file</code> permission.</li>
     <li><code>drive.file</code> lets Posey see and change <em>only</em> the files Posey
       itself creates — a <strong>Posey</strong> folder holding pose images and their
       analysis JSON. It cannot read anything else in your Drive.</li>
@@ -34,13 +76,12 @@
   <h2>Images and analysis</h2>
   <p>When you ask Posey to analyse a pose, a downscaled copy of that image is sent to the
   Anthropic Claude API using <em>your own</em> API key, which stays on your device or in
-  your browser and is never synced. Anthropic's terms govern that request.</p>
+  your browser and is never synced. Anthropic's terms govern that request. Background
+  removal in the console runs entirely in your browser.</p>
 
   <h2>Removing access</h2>
   <p>Revoke Posey at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>
   and delete the Posey folder from your Drive.</p>
-
-  <p><a href="./">← Posey Console</a></p>
 </main>
 </body>
 </html>
