@@ -87,7 +87,44 @@
   }
   header h1 { font-size: 16px; margin: 0; letter-spacing: 0.02em; white-space: nowrap; }
   header .spacer { flex: 1; }
-  #syncState { font-size: 13px; }
+  /* app-bar tabs + central search */
+  .tabs { display: inline-flex; padding: 3px; gap: 2px; border-radius: 999px; background: var(--glass); border: 1px solid var(--glass-edge); margin-left: 8px; }
+  .tabs button { border: 0; background: transparent; padding: 6px 16px; border-radius: 999px; cursor: pointer; color: var(--muted); }
+  .tabs button:hover { color: var(--text); }
+  .tabs button.on { background: var(--accent-soft); color: var(--text); box-shadow: inset 0 0 0 1.5px var(--accent); }
+  .search-wrap {
+    flex: 1 1 360px; max-width: 560px; margin: 0 auto; display: flex; align-items: center; gap: 8px;
+    padding: 0 14px; height: 38px; border-radius: 999px; color: var(--muted);
+    background: rgba(255, 255, 255, 0.06); border: 1px solid var(--glass-edge);
+  }
+  .search-wrap:focus-within { border-color: var(--accent); }
+  .search-wrap input { flex: 1; min-width: 0; background: transparent; border: 0; outline: none; color: var(--text); }
+  .layout.full { grid-template-columns: 1fr; }
+  .layout.full aside { display: none; }
+  .section-title { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 22px 0 10px; }
+  .section-title:first-child { margin-top: 4px; }
+  .album-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .album-row .album-item { background: var(--glass); border-color: var(--glass-edge); }
+  .type-card .name {
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 10px 10px; font-size: 13px; font-weight: 600;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.72));
+  }
+  .type-card .name small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+  .type-card.none img, .type-card.none .ph { opacity: 0.28; }
+  .type-card .ph { position: absolute; inset: 22% 25% 30%; }
+  .card .where { position: absolute; left: 10px; right: 10px; bottom: 8px; font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+  .type-head h2 { margin: 0; font-size: 20px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
+  .tag {
+    display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; border-radius: 999px; font-size: 13px;
+    background: var(--accent-soft); border: 1px solid rgba(236, 72, 153, 0.6);
+  }
+  .tag a { cursor: pointer; text-decoration: none; }
+  .tag button { border: 0; background: transparent; cursor: pointer; padding: 0 4px; color: var(--muted); font-size: 14px; }
+  .tag button:hover { color: var(--text); }
+  .model-field { padding: 8px 10px; font-size: 14px; }
+  .tag-add { width: 100%; padding: 7px 10px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--glass-edge); }
+  .hint-bar { margin: 0 0 12px; padding: 10px 14px; border-radius: 14px; font-size: 14px; color: var(--muted); background: var(--glass); border: 1px solid var(--glass-edge); }
   .avatar-wrap { position: relative; }
   .avatar {
     width: 38px; height: 38px; padding: 0; border-radius: 50%; cursor: pointer;
@@ -332,14 +369,24 @@
     .detail { grid-template-columns: 1fr; }
     .activity { left: 16px; width: auto; }
     header h1 span { display: none; }
+    header { flex-wrap: wrap; }
+    .search-wrap { order: 10; flex-basis: 100%; max-width: none; }
   }
 </style>
 </head>
 <body>
 <header>
   <h1 class="brand"><svg class="logo" viewBox="0 0 108 108" aria-hidden="true"><rect width="108" height="108" rx="26" fill="#1A1523"/><g transform="translate(0 2)"><circle cx="54" cy="30" r="7" fill="#fff"/><path fill="#fff" d="M50 40C46 41 44 45 44 50L44 60 42 74 47 74 49 61 51 61 51 80 56 80 56 61 58 61 60 74 65 74 63 60 63 52 69 58 72 55 64 47C62 43 59 40 55 40Z"/><path fill="#EC4899" d="M44 52 36 50 34 56 44 60Z"/></g></svg><span>Posey <em>Console</em></span></h1>
+  <nav class="tabs" id="tabs" hidden>
+    <button data-tab="photos" class="on">Photos</button>
+    <button data-tab="poses">Poses</button>
+    <button data-tab="models">Models</button>
+  </nav>
+  <div class="search-wrap" id="searchWrap" hidden>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="globalSearch" type="search" placeholder="Search albums, poses and photos  ( / )" autocomplete="off">
+  </div>
   <span class="spacer"></span>
-  <span id="syncState" class="muted"></span>
   <button id="settingsBtn" class="icon-btn" title="Settings" hidden>
     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.14 12.94a7.07 7.07 0 0 0 0-1.88l2.03-1.58a.5.5 0 0 0 .12-.61l-1.92-3.32a.5.5 0 0 0-.59-.22l-2.39.96a7 7 0 0 0-1.62-.94l-.36-2.54a.5.5 0 0 0-.48-.41h-3.84a.5.5 0 0 0-.47.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.5.5 0 0 0-.59.22L2.74 8.87a.5.5 0 0 0 .12.61l2.03 1.58a7.07 7.07 0 0 0 0 1.88l-2.03 1.58a.5.5 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.5.5 0 0 0-.12-.61l-2.03-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/></svg>
   </button>
@@ -405,9 +452,7 @@
     <button id="newAlbumBtn" class="album-item new-album">
       <span class="cover plus">＋</span><span class="name">New album</span>
     </button>
-    <input id="albumSearch" class="field search" type="search" placeholder="Search albums" autocomplete="off">
     <div id="albumList" class="album-list"></div>
-    <div id="noMatch" class="muted" style="font-size:13px;padding:8px 10px" hidden>No album matches</div>
   </aside>
   <main>
     <div id="loading" class="empty">Loading your library from Drive…</div>
@@ -415,10 +460,8 @@
     <!-- Album: the whole frame is the drop zone, the add tile is always first -->
     <div id="albumView" hidden>
       <div class="album-head">
-        <h2 id="albumTitle"></h2>
-        <span id="albumCount" class="muted"></span>
         <span class="spacer"></span>
-        <button id="analyzeAllBtn" class="btn" title="Run Claude on poses without keypoints">✦ Analyse</button>
+        <button id="analyzeAllBtn" class="btn" title="Find keypoints and pose tags for photos that don't have them yet">✦ Analyse</button>
         <button id="renameBtn" class="btn">Rename</button>
         <button id="deleteAlbumBtn" class="btn danger">Delete</button>
         <input id="fileInput" type="file" accept="image/*" multiple hidden>
@@ -446,6 +489,15 @@
         <div class="facts">
           <div><div class="label">Status</div><div id="poseStatus"></div></div>
           <div><div class="label">Claude</div><div id="poseSummary" class="muted"></div></div>
+          <div>
+            <div class="label">Model</div>
+            <input id="modelInput" class="field model-field" list="modelNames" placeholder="Unknown — type a name" autocomplete="off">
+          </div>
+          <div>
+            <div class="label">Poses</div>
+            <div id="poseTags" class="tags"></div>
+            <select id="addTag" class="tag-add"></select>
+          </div>
           <div class="muted" style="font-size:13px">Drag the dots to correct Claude's keypoints, then
             save. The phone uses them for auto-fit and best-match.</div>
           <div class="actions">
@@ -461,6 +513,23 @@
       </div>
     </div>
 
+    <!-- Poses tab: the directory of modelling poses, each with the user's matching photos -->
+    <div id="posesView" hidden></div>
+    <div id="poseTypeView" hidden>
+      <div class="album-head type-head">
+        <button id="typeBack" class="btn">← Poses</button>
+        <div><h2 id="typeName"></h2><div id="typeDesc" class="muted"></div></div>
+      </div>
+      <div id="typeGrid" class="grid"></div>
+      <div id="typeEmpty" class="empty" hidden>No photos tagged with this pose yet — run ✦ Analyse on an album to tag its photos.</div>
+    </div>
+
+    <!-- Models tab: photos grouped by the model's name (Unknown when not set) -->
+    <div id="modelsView" hidden></div>
+
+    <!-- Central search results -->
+    <div id="searchView" hidden></div>
+
     <div id="noAlbums" class="empty" hidden>No albums yet. Create one with “＋ New album”, or import
       photos in the Posey app — they appear here after the phone syncs.</div>
   </main>
@@ -471,7 +540,7 @@
   <div class="sheet small">
     <h3 id="askTitle"></h3>
     <p id="askMsg" class="muted" hidden></p>
-    <input id="askInput" class="field" hidden>
+    <input id="askInput" class="field" list="modelNames" hidden>
     <div class="row">
       <button id="askCancel" class="btn">Cancel</button>
       <button id="askOk" class="btn primary"></button>
@@ -499,6 +568,7 @@
   </div>
 </div>
 
+<datalist id="modelNames"></datalist>
 <div id="activity" class="activity" hidden></div>
 <div id="toast" class="toast" hidden></div>
 <footer><a href="privacy.html" target="_blank" rel="noopener">Privacy</a> · <span id="version"></span><span id="heroCredit"> · Pose photos: Andrea Musto, Sydney Sang, Tanya Varshney on Pexels</span></footer>
@@ -513,7 +583,11 @@
 // ============================================================================
 import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.128.0/+esm";
 
-const VERSION = "v0.6.1 · 10 Oct 2026";   // bump on every deploy (shown in the footer)
+// Directory of well-known modelling poses (pose-directory.json, shared with the app).
+const DIR = await fetch("pose-directory.json").then((r) => r.json()).catch(() => ({ groups: [], poses: [] }));
+const POSE_TYPES = new Map(DIR.poses.map((p) => [p.id, p]));
+
+const VERSION = "v0.7.0 · 10 Oct 2026";   // bump on every deploy (shown in the footer)
 const CLIENT_ID = "708106056499-vmeb6vvjvoajvpv9b3v0dq5h0r37h848.apps.googleusercontent.com";
 const SCOPES = "openid https://www.googleapis.com/auth/userinfo.email " +
   "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/drive.file";
@@ -604,7 +678,11 @@ initGoogle();
 }
 const signIn = () => tokenClient && tokenClient.requestAccessToken({ prompt: "" });
 $("signin").onclick = signIn; $("signin2").onclick = signIn;
-$("albumSearch").oninput = () => render();
+$("globalSearch").oninput = () => { if (openId && $("globalSearch").value) closePose(true); render(); };
+document.querySelectorAll("#tabs button").forEach((b) => b.onclick = async () => {
+  if (!(await closePose())) return;
+  tab = b.dataset.tab; openType = null; openModel = null; $("globalSearch").value = ""; render(); window.scrollTo({ top: 0 });
+});
 
 class AuthError extends Error {}
 async function gfetch(url, opts = {}) {
@@ -621,6 +699,7 @@ const gjson = async (url, opts) => (await gfetch(url, opts)).json();
 async function onSignedIn() {
   $("signin").hidden = true; $("welcome").hidden = true; $("heroCredit").hidden = true;
   $("account").hidden = false; $("settingsBtn").hidden = false; $("app").hidden = false;
+  $("tabs").hidden = false; $("searchWrap").hidden = false;
   try {
     me = await gjson("https://www.googleapis.com/oauth2/v3/userinfo");
     $("who").textContent = me.email || "";
@@ -691,7 +770,6 @@ let currentAlbum = null;
 
 async function loadLibrary() {
   $("loading").hidden = false; $("albumView").hidden = true; $("noAlbums").hidden = true;
-  $("syncState").textContent = "Loading…";
   try {
     folders.root = await ensureFolder("Posey", "root");
     folders.poses = await ensureFolder("poses", folders.root);
@@ -724,12 +802,9 @@ async function loadLibrary() {
       const url = f.png ? URL.createObjectURL(await downloadBlob(f.png.id)) : null;
       poses.set(id, { json, files: { json: f.json.id, png: f.png?.id, jpg: f.jpg?.id }, url });
     });
-    const total = albumsDoc.albums.reduce((n, a) => n + a.poses.length, 0);
-    $("syncState").textContent = `${total} pose${total === 1 ? "" : "s"} in Drive`;
     if (!currentAlbum || !albumsDoc.albums.some((a) => a.id === currentAlbum)) currentAlbum = albumsDoc.albums[0]?.id || null;
     render();
   } catch (e) {
-    $("syncState").textContent = "";
     toast(e.message, 6000);
   } finally { $("loading").hidden = true; }
 }
@@ -783,31 +858,213 @@ const album = () => albumsDoc.albums.find((a) => a.id === currentAlbum);
 const touchAlbum = (al) => { al.updatedAt = now(); };
 
 // ---------------------------------------------------------------- rendering
-function render() {
-  const list = $("albumList"); list.innerHTML = "";
-  const q = $("albumSearch").value.trim().toLowerCase();
-  const shown = albumsDoc.albums.filter((a) => !q || a.name.toLowerCase().includes(q));
-  $("noMatch").hidden = !(q && shown.length === 0);
-  for (const al of shown) {
-    const ready = al.poses.filter((id) => poses.get(id)?.json.status === "READY").length;
-    const coverId = al.poses.find((id) => poses.get(id)?.url);
-    const b = document.createElement("button");
-    b.className = "album-item" + (al.id === currentAlbum ? " active" : "");
-    b.innerHTML = `<span class="cover"></span><span><div class="name"></div><div class="count"></div></span>`;
-    if (coverId) b.querySelector(".cover").style.backgroundImage = `url("${poses.get(coverId).url}")`;
-    b.querySelector(".name").textContent = al.name;
-    b.querySelector(".count").textContent = `${ready} pose${ready === 1 ? "" : "s"}`;
-    b.onclick = () => { currentAlbum = al.id; closePose(true); render(); };
-    list.appendChild(b);
+let tab = "photos", openType = null, openModel = null;
+const UNKNOWN = "\u0000unknown";   // group key for photos without a model name
+const modelOf = (id) => (poses.get(id)?.json.model || "").trim();
+/** Model name → photo ids, case-insensitive, keeping the first spelling seen. */
+function modelGroups() {
+  const groups = new Map();
+  for (const id of albumsDoc.albums.flatMap((a) => a.poses)) {
+    if (!poses.has(id)) continue;
+    const name = modelOf(id), key = name ? name.toLowerCase() : UNKNOWN;
+    if (!groups.has(key)) groups.set(key, { key, name: name || "Unknown", ids: [] });
+    groups.get(key).ids.push(id);
   }
+  return [...groups.values()].sort((a, b) => (a.key === UNKNOWN) - (b.key === UNKNOWN) || a.name.localeCompare(b.name));
+}
+function refreshModelNames() {
+  $("modelNames").innerHTML = modelGroups().filter((g) => g.key !== UNKNOWN).map((g) => `<option value="${esc(g.name)}">`).join("");
+}
+const tagsOf = (id) => poses.get(id)?.json.analysis?.tags || [];
+const albumOf = (id) => albumsDoc.albums.find((a) => a.poses.includes(id));
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+/** One central render: search results, the Poses tab, or the Photos tab. */
+function render() {
+  const q = $("globalSearch").value.trim().toLowerCase();
+  document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("on", !q && b.dataset.tab === tab));
+  for (const v of ["albumView", "poseView", "noAlbums", "posesView", "poseTypeView", "modelsView", "searchView"]) $(v).hidden = true;
+  $("app").classList.toggle("full", !!q || tab !== "photos");
+  refreshModelNames();
+  if (q) return renderSearch(q);
+  if (tab === "poses") return openType ? renderPoseType() : renderPoses();
+  if (tab === "models") return openModel ? renderModel() : renderModels_();
+  renderPhotos();
+}
+
+/** Open a photo in its album (from search or the Poses tab). */
+async function gotoPhoto(id) {
+  const al = albumOf(id); if (!al) return;
+  tab = "photos"; openType = null; openModel = null; currentAlbum = al.id; $("globalSearch").value = "";
+  await openPose(id);
+}
+
+/** A photo card: thumbnail, number or album label, ✦ badge, status chip. */
+function photoCard(id, label, onClick) {
+  const p = poses.get(id);
+  const card = document.createElement("div");
+  card.className = "card";
+  const st = p?.json.status || "PROCESSING";
+  if (st !== "READY") card.classList.add("dim");
+  card.innerHTML = (label ? `<span class="num">${esc(label)}</span>` : "") +
+    (p?.url ? `<img alt="" loading="lazy">` : "") +
+    (p?.json.analysis && st === "READY" ? `<span class="badge" title="Keypoints ready">✦</span>` : "");
+  if (p?.url) card.querySelector("img").src = p.url;
+  const chip = statusChip(p, id);
+  if (chip) card.appendChild(chip);
+  card.onclick = () => p && onClick();
+  return card;
+}
+
+function typeCard(t, ids) {
+  const cover = ids.find((id) => poses.get(id)?.url && poses.get(id).json.status === "READY");
+  const card = document.createElement("div");
+  card.className = "card type-card" + (ids.length ? "" : " none");
+  card.innerHTML = (cover ? `<img alt="" loading="lazy">` : `<span class="ph">${LOGO_SVG}</span>`) +
+    `<span class="name">${esc(t.name)}<small>${ids.length} photo${ids.length === 1 ? "" : "s"}</small></span>`;
+  if (cover) card.querySelector("img").src = poses.get(cover).url;
+  card.title = t.description;
+  card.onclick = () => { tab = "poses"; openType = t.id; $("globalSearch").value = ""; render(); window.scrollTo({ top: 0 }); };
+  return card;
+}
+const LOGO_SVG = `<svg viewBox="34 30 40 58" width="100%" height="100%" aria-hidden="true"><circle cx="54" cy="32" r="7" fill="#fff"/><path fill="#fff" d="M50 42C46 43 44 47 44 52L44 62 42 76 47 76 49 63 51 63 51 82 56 82 56 63 58 63 60 76 65 76 63 62 63 54 69 60 72 57 64 49C62 45 59 42 55 42Z"/></svg>`;
+const photosTagged = (typeId) => albumsDoc.albums.flatMap((a) => a.poses).filter((id) => tagsOf(id).includes(typeId));
+
+function renderPoses() {
+  const box = $("posesView"); box.hidden = false; box.innerHTML = "";
+  const all = albumsDoc.albums.flatMap((a) => a.poses).filter((id) => poses.get(id)?.json.status === "READY");
+  const untagged = all.filter((id) => !tagsOf(id).length).length;
+  if (untagged) {
+    const h = document.createElement("div"); h.className = "hint-bar";
+    h.textContent = `${untagged} photo${untagged === 1 ? " isn't" : "s aren't"} tagged yet — open an album and press ✦ Analyse to tag ${untagged === 1 ? "it" : "them"}.`;
+    box.appendChild(h);
+  }
+  for (const g of DIR.groups) {
+    const types = DIR.poses.filter((t) => t.group === g.id);
+    if (!types.length) continue;
+    const title = document.createElement("div"); title.className = "section-title"; title.textContent = g.name;
+    const grid = document.createElement("div"); grid.className = "grid";
+    // Poses you have photos of first, then the rest of the directory.
+    types.map((t) => [t, photosTagged(t.id)]).sort((a, b) => (b[1].length > 0) - (a[1].length > 0))
+      .forEach(([t, ids]) => grid.appendChild(typeCard(t, ids)));
+    box.append(title, grid);
+  }
+}
+
+function renderPoseType() {
+  const t = POSE_TYPES.get(openType); if (!t) { openType = null; return renderPoses(); }
+  $("poseTypeView").hidden = false;
+  $("typeBack").textContent = "← Poses";
+  $("typeName").textContent = t.name; $("typeDesc").textContent = t.description;
+  const grid = $("typeGrid"); grid.innerHTML = "";
+  const ids = photosTagged(t.id);
+  ids.forEach((id) => grid.appendChild(photoCard(id, albumOf(id)?.name, () => gotoPhoto(id))));
+  $("typeEmpty").hidden = ids.length > 0;
+}
+$("typeBack").onclick = () => { openType = null; openModel = null; render(); };
+
+function modelCard(g) {
+  const cover = g.ids.find((id) => poses.get(id)?.url);
+  const card = document.createElement("div");
+  card.className = "card type-card";
+  card.innerHTML = (cover ? `<img alt="" loading="lazy">` : `<span class="ph">${LOGO_SVG}</span>`) +
+    `<span class="name">${esc(g.name)}<small>${g.ids.length} photo${g.ids.length === 1 ? "" : "s"}</small></span>`;
+  if (cover) card.querySelector("img").src = poses.get(cover).url;
+  card.onclick = () => { tab = "models"; openModel = g.key; $("globalSearch").value = ""; render(); window.scrollTo({ top: 0 }); };
+  return card;
+}
+
+function renderModels_() {
+  const box = $("modelsView"); box.hidden = false; box.innerHTML = "";
+  const groups = modelGroups();
+  const unknown = groups.find((g) => g.key === UNKNOWN);
+  if (unknown && unknown.ids.length) {
+    const h = document.createElement("div"); h.className = "hint-bar";
+    h.textContent = `${unknown.ids.length} photo${unknown.ids.length === 1 ? " has" : "s have"} no model name — open a photo and fill in “Model”, or name them when you add images.`;
+    box.appendChild(h);
+  }
+  if (!groups.length) { box.innerHTML = `<div class="empty">No photos yet.</div>`; return; }
+  const grid = document.createElement("div"); grid.className = "grid";
+  groups.forEach((g) => grid.appendChild(modelCard(g)));
+  box.appendChild(grid);
+}
+
+function renderModel() {
+  const g = modelGroups().find((x) => x.key === openModel);
+  if (!g) { openModel = null; return renderModels_(); }
+  $("poseTypeView").hidden = false;
+  $("typeBack").textContent = "← Models";
+  $("typeName").textContent = g.name;
+  $("typeDesc").textContent = `${g.ids.length} photo${g.ids.length === 1 ? "" : "s"}` + (g.key === UNKNOWN ? " without a model name" : "");
+  const grid = $("typeGrid"); grid.innerHTML = "";
+  g.ids.forEach((id) => grid.appendChild(photoCard(id, albumOf(id)?.name, () => gotoPhoto(id))));
+  $("typeEmpty").hidden = true;
+}
+
+function renderSearch(q) {
+  const box = $("searchView"); box.hidden = false; box.innerHTML = "";
+  const has = (t) => t && String(t).toLowerCase().includes(q);
+  const albums = albumsDoc.albums.filter((a) => has(a.name));
+  const types = DIR.poses.filter((t) => has(t.name) || has(t.id.replace(/-/g, " ")));
+  const typeIds = new Set(types.map((t) => t.id));
+  const models = modelGroups().filter((g) => g.key !== UNKNOWN && has(g.name));
+  const photos = albumsDoc.albums.flatMap((a) => a.poses.map((id) => [id, a])).filter(([id, a]) => {
+    const p = poses.get(id); if (!p) return false;
+    const an = p.json.analysis || {};
+    return has(a.name) || has(an.summary) || has(p.json.note) || has(p.json.model) ||
+      tagsOf(id).some((t) => typeIds.has(t) || has(POSE_TYPES.get(t)?.name));
+  }).slice(0, 120);
+  const section = (label, el) => {
+    const t = document.createElement("div"); t.className = "section-title"; t.textContent = label;
+    box.append(t, el);
+  };
+  if (albums.length) {
+    const row = document.createElement("div"); row.className = "album-row";
+    for (const al of albums) row.appendChild(albumButton(al, () => { $("globalSearch").value = ""; tab = "photos"; currentAlbum = al.id; render(); }));
+    section(`Albums · ${albums.length}`, row);
+  }
+  if (types.length) {
+    const grid = document.createElement("div"); grid.className = "grid";
+    types.forEach((t) => grid.appendChild(typeCard(t, photosTagged(t.id))));
+    section(`Poses · ${types.length}`, grid);
+  }
+  if (models.length) {
+    const grid = document.createElement("div"); grid.className = "grid";
+    models.forEach((g) => grid.appendChild(modelCard(g)));
+    section(`Models · ${models.length}`, grid);
+  }
+  if (photos.length) {
+    const grid = document.createElement("div"); grid.className = "grid";
+    photos.forEach(([id, a]) => grid.appendChild(photoCard(id, a.name, () => gotoPhoto(id))));
+    section(`Photos · ${photos.length}`, grid);
+  }
+  if (!albums.length && !types.length && !models.length && !photos.length) {
+    box.innerHTML = `<div class="empty">Nothing matches “${esc(q)}”.</div>`;
+  }
+}
+
+function albumButton(al, onClick) {
+  const ready = al.poses.filter((id) => poses.get(id)?.json.status === "READY").length;
+  const coverId = al.poses.find((id) => poses.get(id)?.url);
+  const b = document.createElement("button");
+  b.className = "album-item" + (al.id === currentAlbum && tab === "photos" ? " active" : "");
+  b.innerHTML = `<span class="cover"></span><span><div class="name"></div><div class="count"></div></span>`;
+  if (coverId) b.querySelector(".cover").style.backgroundImage = `url("${poses.get(coverId).url}")`;
+  b.querySelector(".name").textContent = al.name;
+  b.querySelector(".count").textContent = `${ready} photo${ready === 1 ? "" : "s"}`;
+  b.onclick = onClick;
+  return b;
+}
+
+function renderPhotos() {
+  const list = $("albumList"); list.innerHTML = "";
+  for (const al of albumsDoc.albums) list.appendChild(albumButton(al, () => { currentAlbum = al.id; closePose(true); render(); }));
   const al = album();
   if (openId && (!al || !al.poses.includes(openId) || !poses.has(openId))) openId = null;
   $("noAlbums").hidden = !!al;
   $("albumView").hidden = !al || !!openId;
   $("poseView").hidden = !al || !openId;
   if (!al) return;
-  $("albumTitle").textContent = al.name;
-  $("albumCount").textContent = `${al.poses.length} item${al.poses.length === 1 ? "" : "s"}`;
   const grid = $("grid"); grid.innerHTML = "";
   // Add tile: always the first card, same size as a pose.
   const add = document.createElement("button");
@@ -815,21 +1072,7 @@ function render() {
   add.innerHTML = `<span class="plus">＋</span><span>Add images</span><span class="sub">or drop them here</span>`;
   add.onclick = () => $("fileInput").click();
   grid.appendChild(add);
-  al.poses.forEach((id, i) => {
-    const p = poses.get(id);
-    const card = document.createElement("div");
-    card.className = "card";
-    const st = p?.json.status || "PROCESSING";
-    if (st !== "READY") card.classList.add("dim");
-    card.innerHTML = `<span class="num">${String(i + 1).padStart(2, "0")}</span>` +
-      (p?.url ? `<img alt="" loading="lazy">` : "") +
-      (p?.json.analysis && st === "READY" ? `<span class="badge" title="Keypoints ready">✦</span>` : "");
-    if (p?.url) card.querySelector("img").src = p.url;
-    const chip = statusChip(p, id);
-    if (chip) card.appendChild(chip);
-    card.onclick = () => p && openPose(id);
-    grid.appendChild(card);
-  });
+  al.poses.forEach((id, i) => grid.appendChild(photoCard(id, String(i + 1).padStart(2, "0"), () => openPose(id))));
 }
 
 function statusChip(p, id) {
@@ -866,6 +1109,8 @@ for (const id of ["askModal", "settingsModal"]) {
 document.addEventListener("keydown", (e) => {
   const typing = /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement?.tagName || "");
   const dialogOpen = !$("askModal").hidden || !$("settingsModal").hidden;
+  if (e.key === "/" && !typing && !dialogOpen && !$("app").hidden) { e.preventDefault(); $("globalSearch").focus(); return; }
+  if (e.key === "Escape" && document.activeElement === $("globalSearch")) { $("globalSearch").value = ""; $("globalSearch").blur(); render(); return; }
   if (e.key === "Escape") {
     setMenu(false);
     if (!$("settingsModal").hidden) { $("settingsClose").click(); return; }
@@ -945,7 +1190,10 @@ give your best estimate. summary: one short sentence describing the pose (stance
 arms, weight, facing direction).
 subject: is_human is false for objects, animals, drawings, mannequins and empty
 scenes; people_count counts every person visible; full_body is true only when the
-whole body from head top to feet is inside the image.`;
+whole body from head top to feet is inside the image.
+tags: the poses below that this person is doing, most characteristic first (1 to 4 ids,
+only ones that clearly apply). Ids and what they mean:
+${DIR.poses.map((t) => `- ${t.id}: ${t.description}`).join("\n")}`;
 const ASK = "This is a candidate pose-reference photo, usually with the background removed " +
   "(grey). First fill in subject: is it a real person, how many people are " +
   "visible, and is the whole body from the top of the head to the feet inside " +
@@ -959,9 +1207,19 @@ const SCHEMA = {
     summary: { type: "string" },
     subject: { type: "object", properties: { is_human: { type: "boolean" }, people_count: { type: "integer" }, full_body: { type: "boolean" } },
       required: ["is_human", "people_count", "full_body"], additionalProperties: false },
+    tags: { type: "array", items: { type: "string", enum: DIR.poses.map((t) => t.id) } },
   },
-  required: ["subject", "points", "summary"], additionalProperties: false,
+  required: ["subject", "points", "summary", "tags"], additionalProperties: false,
 };
+/** Tag-only request for photos that already have keypoints (keeps hand-corrected points). */
+const TAG_SCHEMA = {
+  type: "object",
+  properties: { tags: SCHEMA.properties.tags, summary: { type: "string" } },
+  required: ["tags", "summary"], additionalProperties: false,
+};
+const TAG_ASK = "Which poses from the directory is this person doing? Return their ids as tags, " +
+  "most characteristic first, and a one-sentence summary of the pose.";
+const cleanTags = (tags) => [...new Set((tags || []).filter((t) => POSE_TYPES.has(t)))].slice(0, 4);
 
 function rejectReason(s) {
   if (!s) return null;
@@ -990,16 +1248,17 @@ async function claudeJpeg(img) {
   return btoa(bin);
 }
 
-async function analyseWithClaude(img) {
+/** One structured-output Claude call on an image. */
+async function callClaude(img, ask, schema, effort) {
   if (!store.key) throw new Error("Add your Anthropic API key in Settings (⚙)");
   const client = new Anthropic({ apiKey: store.key, dangerouslyAllowBrowser: true });
   const model = store.model;
   const body = {
     model, max_tokens: 16000, system: SYSTEM_PROMPT,
-    output_config: { effort: "medium", format: { type: "json_schema", schema: SCHEMA } },
+    output_config: { effort, format: { type: "json_schema", schema } },
     messages: [{ role: "user", content: [
       { type: "image", source: { type: "base64", media_type: "image/jpeg", data: await claudeJpeg(img) } },
-      { type: "text", text: ASK },
+      { type: "text", text: ask },
     ] }],
   };
   const opts = {};
@@ -1011,14 +1270,23 @@ async function analyseWithClaude(img) {
   if (res.stop_reason === "refusal") throw new Error("Claude declined to analyse this image");
   const text = res.content.find((b) => b.type === "text")?.text;
   if (!text) throw new Error("Empty response from Claude");
-  const o = JSON.parse(text);
+  return JSON.parse(text);
+}
+
+async function classifyWithClaude(img) {
+  const o = await callClaude(img, TAG_ASK, TAG_SCHEMA, "low");
+  return { tags: cleanTags(o.tags), summary: o.summary || "" };
+}
+
+async function analyseWithClaude(img) {
+  const o = await callClaude(img, ASK, SCHEMA, "medium");
   const points = {};
   for (const n of NAMES) {
     const p = o.points?.[n];
     if (!p || p.visible === false || !Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
     points[n] = [Math.min(1, Math.max(0, p.x)), Math.min(1, Math.max(0, p.y))];
   }
-  return { summary: o.summary || "", subject: o.subject || null, points };
+  return { summary: o.summary || "", subject: o.subject || null, points, tags: cleanTags(o.tags) };
 }
 
 /** Lowest opaque row of the cut-out → ground y (soles), like the app. */
@@ -1155,17 +1423,23 @@ async function importFiles(fileList) {
   const al = album(); if (!al) { toast("Create an album first"); return; }
   const files = [...fileList].filter((f) => f.type.startsWith("image/"));
   if (!files.length) return;
+  const model = await ask({
+    title: files.length === 1 ? "Who's the model?" : `Who's the model in these ${files.length} photos?`,
+    message: "Leave empty if you don't know — they go under Unknown, and you can name them later.",
+    input: "", ok: "Add photos",
+  });
+  if (model === null) return;   // cancelled
   if (!store.key) toast("No Claude key — images are cut out but not checked or analysed. Add one in Settings.", 6000);
-  const items = files.map((f) => ({ id: uuid(), file: f }));
+  const items = files.map((f) => ({ id: uuid(), file: f, model }));
   for (const it of items) jobs.set(it.id, { name: it.file.name, state: "Queued" });
   renderActivity();
   for (const it of items) {               // one at a time: the cut-out model is memory-hungry
-    try { await importOne(al, it.id, it.file); }
+    try { await importOne(al, it.id, it.file, it.model); }
     catch (e) { setJob(it.id, "Failed: " + e.message.slice(0, 60)); console.error(e); }
   }
 }
 
-async function importOne(al, id, file) {
+async function importOne(al, id, file, model = "") {
   setJob(id, "Reading…");
   const original = await downscaleOriginal(file);
   setJob(id, "Removing background…");
@@ -1174,6 +1448,7 @@ async function importOne(al, id, file) {
   catch (e) { console.warn("background removal failed", e); }
   const t = now();
   const json = { id, status: "READY", note: "", createdAt: t, updatedAt: t, source: "console", analysis: null };
+  if (model) json.model = model;
   if (!framed) { json.status = "REJECTED"; json.note = "No subject found"; framed = await frameCutout(original); }
 
   if (json.status === "READY" && store.key) {
@@ -1213,15 +1488,33 @@ document.addEventListener("drop", (e) => { if ($("app").hidden) return; e.preven
 $("analyzeAllBtn").onclick = async () => {
   const al = album(); if (!al) return;
   if (!store.key) { toast("Add your Anthropic API key in Settings (⚙)"); $("settingsBtn").click(); return; }
-  const todo = al.poses.filter((id) => { const p = poses.get(id); return p && p.url && !p.json.analysis && p.json.status !== "REJECTED"; });
-  if (!todo.length) { toast("Every pose here already has keypoints"); return; }
-  for (const id of todo) jobs.set(id, { name: `Pose ${al.poses.indexOf(id) + 1}`, state: "Queued" });
+  const usable = (p) => p && p.url && p.json.status !== "REJECTED";
+  const full = al.poses.filter((id) => { const p = poses.get(id); return usable(p) && !p.json.analysis; });
+  const tagOnly = al.poses.filter((id) => { const p = poses.get(id); return usable(p) && p.json.analysis && !p.json.analysis.tags; });
+  if (!full.length && !tagOnly.length) { toast("Every photo here already has keypoints and pose tags"); return; }
+  for (const id of [...full, ...tagOnly]) jobs.set(id, { name: `Photo ${al.poses.indexOf(id) + 1}`, state: "Queued" });
   renderActivity();
-  for (const id of todo) {
+  for (const id of full) {
     try { await reanalyse(id); setJob(id, "done"); }
     catch (e) { setJob(id, "Failed: " + e.message.slice(0, 60)); }
   }
+  for (const id of tagOnly) {
+    try { await tagPose(id); setJob(id, "done"); }
+    catch (e) { setJob(id, "Failed: " + e.message.slice(0, 60)); }
+  }
 };
+
+/** Add pose tags (and a summary if missing) without touching the keypoints. */
+async function tagPose(id) {
+  const p = poses.get(id);
+  setJob(id, "Tagging pose…");
+  const img = await createImageBitmap(await (await fetch(p.url)).blob());
+  const c = document.createElement("canvas"); c.width = img.width; c.height = img.height;
+  c.getContext("2d").drawImage(img, 0, 0);
+  const r = await classifyWithClaude(c);
+  p.json.analysis = { ...p.json.analysis, tags: r.tags, summary: p.json.analysis.summary || r.summary };
+  await savePoseJson(id);
+}
 
 async function reanalyse(id) {
   const p = poses.get(id);
@@ -1255,6 +1548,8 @@ async function openPose(id) {
   const a = p.json.analysis;
   $("poseSummary").textContent = a ? (a.summary || "—") + (a.manual ? " (points edited)" : "") : "Not analysed yet";
   editPoints = a ? JSON.parse(JSON.stringify(a.points)) : null;
+  renderTags();
+  $("modelInput").value = modelOf(id);
   $("keepBtn").hidden = st === "READY";
   $("savePointsBtn").disabled = true;
   const sel = $("moveSelect"); sel.innerHTML = "";
@@ -1265,6 +1560,42 @@ async function openPose(id) {
   $("backBtn").textContent = `← ${al?.name || "Album"}`;
   render();
   window.scrollTo({ top: 0 });
+}
+
+/** Tag chips (click a name → that pose in the Poses tab, × → remove) and the add-tag picker. */
+function renderTags() {
+  const p = poses.get(openId); if (!p) return;
+  const tags = tagsOf(openId);
+  const box = $("poseTags"); box.innerHTML = "";
+  if (!tags.length) box.innerHTML = `<span class="muted" style="font-size:13px">No pose tags yet</span>`;
+  for (const t of tags) {
+    const info = POSE_TYPES.get(t); if (!info) continue;
+    const chip = document.createElement("span"); chip.className = "tag"; chip.title = info.description;
+    chip.innerHTML = `<a>${esc(info.name)}</a><button title="Remove tag" aria-label="Remove ${esc(info.name)}">×</button>`;
+    chip.querySelector("a").onclick = () => { tab = "poses"; openType = t; closePose(true); };
+    chip.querySelector("button").onclick = () => setTags(tags.filter((x) => x !== t));
+    box.appendChild(chip);
+  }
+  const sel = $("addTag"); sel.innerHTML = `<option value="">＋ Add a pose tag…</option>`;
+  for (const g of DIR.groups) {
+    const og = document.createElement("optgroup"); og.label = g.name;
+    for (const t of DIR.poses.filter((x) => x.group === g.id && !tags.includes(x.id))) og.appendChild(new Option(t.name, t.id));
+    if (og.children.length) sel.appendChild(og);
+  }
+}
+$("modelInput").onchange = async () => {
+  const p = poses.get(openId); if (!p) return;
+  const name = $("modelInput").value.trim();
+  if ((p.json.model || "") === name) return;
+  if (name) p.json.model = name; else delete p.json.model;
+  try { await savePoseJson(openId); toast(name ? `Model: ${name}` : "Model cleared"); render(); } catch (e) { toast(e.message); }
+};
+$("addTag").onchange = (e) => { const t = e.target.value; if (t) setTags([...tagsOf(openId), t]); };
+async function setTags(tags) {
+  const p = poses.get(openId); if (!p) return;
+  p.json.analysis = { points: {}, summary: "", ...(p.json.analysis || {}), tags };
+  renderTags();
+  try { await savePoseJson(openId); } catch (e) { toast(e.message); }
 }
 
 /** Back to the album grid (force = skip the unsaved-changes check). */
