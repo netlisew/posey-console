@@ -226,20 +226,20 @@
   }
   .eyebrow {
     display: inline-flex; align-items: center; gap: 8px;
-    padding: 5px 12px; border-radius: 999px; font-size: 13px;
+    padding: 6px 14px; border-radius: 999px; font-size: clamp(13px, 1.9vh, 15px);
     background: var(--glass); border: 1px solid var(--glass-edge); color: var(--muted);
   }
   .eyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
-  .hero-title { font-size: clamp(32px, min(5.2vw, 8.5vh), 64px); line-height: 1.04; letter-spacing: -0.025em; margin: 2.2vh 0 1.8vh; }
+  .hero-title { font-size: clamp(34px, min(5.8vw, 9.6vh), 78px); line-height: 1.04; letter-spacing: -0.025em; margin: 2.2vh 0 1.8vh; }
   .grad { background: linear-gradient(92deg, #f9a8d4, #ec4899 45%, #a78bfa); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .lead { font-size: clamp(15px, 2.4vh, 18px); color: var(--muted); max-width: 34em; margin: 0 0 3vh; }
+  .lead { font-size: clamp(16px, 2.8vh, 21px); line-height: 1.55; color: var(--muted); max-width: 32em; margin: 0 0 3.4vh; }
   .cta { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-  .cta .btn { padding: 11px 22px; font-size: 16px; }
-  .fine { font-size: 13px; color: var(--muted); margin-top: 2.2vh; display: flex; gap: 8px; align-items: center; }
+  .cta .btn { padding: 12px 24px; font-size: clamp(15px, 2.3vh, 17px); }
+  .fine { font-size: clamp(13px, 1.9vh, 14px); color: var(--muted); margin-top: 2.4vh; display: flex; gap: 8px; align-items: center; }
 
   .phone {
     /* Sized from the viewport height so the whole phone fits under the header. */
-    position: relative; height: min(700px, calc(100svh - 60px - 5vh)); aspect-ratio: 9 / 19.5; margin: 0 auto;
+    position: relative; height: min(700px, calc(100svh - 60px - 5vh - 22px)); aspect-ratio: 9 / 19.5; margin: 0 auto;
     border-radius: 44px; padding: 10px;
     background: linear-gradient(160deg, #2a2730, #121016);
     box-shadow: 0 0 0 1px rgba(255,255,255,0.12), 0 40px 90px rgba(0,0,0,0.6), 0 0 120px rgba(236,72,153,0.18);
@@ -252,8 +252,16 @@
       linear-gradient(180deg, #8d8577, #5b5660 60%, #3b3742);
   }
   .screen .pose { position: absolute; left: 6%; right: 6%; top: 12%; bottom: 11%; }
-  .screen .pose img, .screen .pose svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .screen .pose img { opacity: 0.62; object-fit: contain; }
+  .screen .slide { position: absolute; inset: 0; opacity: 0; transition: opacity 0.8s ease; }
+  .screen .slide.on { opacity: 1; }
+  .screen .slide img, .screen .slide svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .screen .slide img { opacity: 0.62; object-fit: contain; }
+  .hero-dots { display: flex; justify-content: center; gap: 8px; margin-top: 14px; }
+  .hero-dots button {
+    width: 8px; height: 8px; padding: 0; border-radius: 999px; cursor: pointer;
+    background: rgba(255, 255, 255, 0.28); border: 0; transition: width 0.3s, background 0.3s;
+  }
+  .hero-dots button.on { width: 22px; background: var(--accent); }
   .screen .bar {
     position: absolute; top: 0; left: 0; right: 0; height: 9%;
     display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;
@@ -349,15 +357,13 @@
     <div>
       <div class="phone" aria-hidden="true">
         <div class="screen">
-          <div class="pose">
-            <img src="assets/hero-pose.webp" alt="">
-            <svg id="heroSkeleton" viewBox="0 0 540 960" preserveAspectRatio="xMidYMid meet"></svg>
-          </div>
-          <div class="bar">Dress Up&nbsp;&nbsp;05/06</div>
-          <div class="match">✦ Best match · 92%</div>
+          <div class="pose" id="heroSlides"></div>
+          <div class="bar" id="heroBar">Dress Up&nbsp;&nbsp;02/06</div>
+          <div class="match" id="heroMatch">✦ Best match · 92%</div>
           <div class="controls"><span class="round"></span><span class="shutter"></span><span class="round"></span></div>
         </div>
       </div>
+      <div class="hero-dots" id="heroDots" role="tablist" aria-label="Example poses"></div>
     </div>
   </div>
 
@@ -371,7 +377,6 @@
     <div class="step glass"><span class="n">4</span><h3>Auto-fit &amp; shoot</h3>
       <p>Count down, step back, and the guide snaps to your size — with best-match poses ready.</p></div>
   </div>
-  <p class="landing-foot">Hero photo: Andrea Musto on Pexels.</p>
 </div>
 
 <!-- Signed in -->
@@ -468,7 +473,7 @@
 
 <div id="activity" class="activity" hidden></div>
 <div id="toast" class="toast" hidden></div>
-<footer><a href="privacy.html" target="_blank" rel="noopener">Privacy</a> · <span id="version"></span></footer>
+<footer><a href="privacy.html" target="_blank" rel="noopener">Privacy</a> · <span id="version"></span><span id="heroCredit"> · Pose photos: Andrea Musto, Sydney Sang, Tanya Varshney on Pexels</span></footer>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script type="module">
@@ -480,7 +485,7 @@
 // ============================================================================
 import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.128.0/+esm";
 
-const VERSION = "v0.4.4 · 10 Oct 2026";   // bump on every deploy (shown in the footer)
+const VERSION = "v0.5.0 · 10 Oct 2026";   // bump on every deploy (shown in the footer)
 const CLIENT_ID = "708106056499-vmeb6vvjvoajvpv9b3v0dq5h0r37h848.apps.googleusercontent.com";
 const SCOPES = "openid https://www.googleapis.com/auth/userinfo.email " +
   "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/drive.file";
@@ -548,7 +553,7 @@ async function gfetch(url, opts = {}) {
 const gjson = async (url, opts) => (await gfetch(url, opts)).json();
 
 async function onSignedIn() {
-  $("signin").hidden = true; $("welcome").hidden = true;
+  $("signin").hidden = true; $("welcome").hidden = true; $("heroCredit").hidden = true;
   $("account").hidden = false; $("settingsBtn").hidden = false; $("app").hidden = false;
   try {
     me = await gjson("https://www.googleapis.com/oauth2/v3/userinfo");
@@ -947,29 +952,70 @@ function refineGround(analysis, canvas) {
   return { ...analysis, points: { ...p, ground: [gx, bottom] } };
 }
 
-// ---------------------------------------------------------------- landing hero skeleton
-(function drawHero() {
-  // Keypoints of the hero pose (fractions of the image), placed by hand for the illustration.
-  const K = { head_top: [0.49, 0.035], nose: [0.485, 0.14], neck: [0.48, 0.205],
-    left_shoulder: [0.335, 0.21], right_shoulder: [0.62, 0.215], left_elbow: [0.34, 0.36], right_elbow: [0.69, 0.32],
-    left_wrist: [0.355, 0.48], right_wrist: [0.61, 0.39], left_hip: [0.39, 0.47], right_hip: [0.6, 0.47],
-    left_knee: [0.44, 0.68], right_knee: [0.7, 0.665], left_ankle: [0.48, 0.9], right_ankle: [0.36, 0.595], ground: [0.49, 0.96] };
-  const svg = $("heroSkeleton"), NS = "http://www.w3.org/2000/svg", W = 540, H = 960;
-  for (const [a, b] of BONES) {
-    const l = document.createElementNS(NS, "line");
-    l.setAttribute("x1", K[a][0] * W); l.setAttribute("y1", K[a][1] * H);
-    l.setAttribute("x2", K[b][0] * W); l.setAttribute("y2", K[b][1] * H);
-    l.setAttribute("stroke", "rgba(236,72,153,0.8)"); l.setAttribute("stroke-width", "5"); l.setAttribute("stroke-linecap", "round");
-    svg.appendChild(l);
-  }
-  Object.entries(K).forEach(([n, [x, y]], i) => {
-    const c = document.createElementNS(NS, "circle");
-    c.setAttribute("cx", x * W); c.setAttribute("cy", y * H);
-    c.setAttribute("r", n === "head_top" || n === "ground" ? 10 : 7);
-    c.setAttribute("fill", "#fff"); c.setAttribute("stroke", "#ec4899"); c.setAttribute("stroke-width", "4");
-    c.setAttribute("class", "kp-dot"); c.style.animationDelay = `${(i % 8) * 0.15}s`;
-    svg.appendChild(c);
+// ---------------------------------------------------------------- landing hero carousel
+(function heroCarousel() {
+  // Starter poses with hand-placed keypoints (fractions of the image) for the illustration.
+  const SLIDES = [
+    { img: "assets/hero-dress-02.webp", label: "Dress Up  02/06", match: 92, k: {
+      head_top: [0.49, 0.035], nose: [0.485, 0.14], neck: [0.48, 0.205], left_shoulder: [0.335, 0.21], right_shoulder: [0.62, 0.215],
+      left_elbow: [0.34, 0.36], right_elbow: [0.69, 0.32], left_wrist: [0.355, 0.48], right_wrist: [0.61, 0.39],
+      left_hip: [0.39, 0.47], right_hip: [0.6, 0.47], left_knee: [0.44, 0.68], right_knee: [0.7, 0.665],
+      left_ankle: [0.48, 0.9], right_ankle: [0.36, 0.595], ground: [0.49, 0.96] } },
+    { img: "assets/hero-street-01.webp", label: "Street Style  01/08", match: 88, k: {
+      head_top: [0.37, 0.035], nose: [0.38, 0.11], neck: [0.36, 0.19], left_shoulder: [0.23, 0.21], right_shoulder: [0.48, 0.21],
+      left_elbow: [0.17, 0.37], right_elbow: [0.55, 0.37], left_wrist: [0.13, 0.51], right_wrist: [0.55, 0.52],
+      left_hip: [0.22, 0.43], right_hip: [0.41, 0.43], left_knee: [0.24, 0.66], right_knee: [0.58, 0.68],
+      left_ankle: [0.24, 0.89], right_ankle: [0.75, 0.89], ground: [0.5, 0.94] } },
+    { img: "assets/hero-dress-03.webp", label: "Dress Up  03/06", match: 95, k: {
+      head_top: [0.505, 0.035], nose: [0.5, 0.13], neck: [0.5, 0.2], left_shoulder: [0.38, 0.21], right_shoulder: [0.62, 0.21],
+      left_elbow: [0.23, 0.31], right_elbow: [0.77, 0.1], left_wrist: [0.33, 0.42], right_wrist: [0.62, 0.08],
+      left_hip: [0.4, 0.45], right_hip: [0.6, 0.45], left_knee: [0.39, 0.7], right_knee: [0.54, 0.7],
+      left_ankle: [0.31, 0.89], right_ankle: [0.53, 0.89], ground: [0.43, 0.96] } },
+    { img: "assets/hero-street-07.webp", label: "Street Style  07/08", match: 90, k: {
+      head_top: [0.52, 0.035], nose: [0.52, 0.11], neck: [0.52, 0.19], left_shoulder: [0.38, 0.21], right_shoulder: [0.64, 0.21],
+      left_elbow: [0.355, 0.37], right_elbow: [0.8, 0.31], left_wrist: [0.4, 0.56], right_wrist: [0.62, 0.38],
+      left_hip: [0.4, 0.43], right_hip: [0.62, 0.43], left_knee: [0.43, 0.67], right_knee: [0.6, 0.67],
+      left_ankle: [0.33, 0.915], right_ankle: [0.6, 0.91], ground: [0.47, 0.945] } },
+  ];
+  const NS = "http://www.w3.org/2000/svg", W = 540, H = 960;
+  const box = $("heroSlides"), dots = $("heroDots");
+  const slides = SLIDES.map((sl, si) => {
+    const el = document.createElement("div"); el.className = "slide";
+    const img = document.createElement("img"); img.src = sl.img; img.alt = ""; if (si) img.loading = "lazy";
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    for (const [a, b] of BONES) {
+      const l = document.createElementNS(NS, "line");
+      l.setAttribute("x1", sl.k[a][0] * W); l.setAttribute("y1", sl.k[a][1] * H);
+      l.setAttribute("x2", sl.k[b][0] * W); l.setAttribute("y2", sl.k[b][1] * H);
+      l.setAttribute("stroke", "rgba(236,72,153,0.8)"); l.setAttribute("stroke-width", "5"); l.setAttribute("stroke-linecap", "round");
+      svg.appendChild(l);
+    }
+    Object.entries(sl.k).forEach(([n, [x, y]], i) => {
+      const c = document.createElementNS(NS, "circle");
+      c.setAttribute("cx", x * W); c.setAttribute("cy", y * H);
+      c.setAttribute("r", n === "head_top" || n === "ground" ? 10 : 7);
+      c.setAttribute("fill", "#fff"); c.setAttribute("stroke", "#ec4899"); c.setAttribute("stroke-width", "4");
+      c.setAttribute("class", "kp-dot"); c.style.animationDelay = `${(i % 8) * 0.15}s`;
+      svg.appendChild(c);
+    });
+    el.append(img, svg); box.appendChild(el);
+    const d = document.createElement("button");
+    d.setAttribute("aria-label", sl.label); d.onclick = () => { show(si); restart(); };
+    dots.appendChild(d);
+    return el;
   });
+  let cur = 0, timer = null;
+  function show(i) {
+    cur = (i + SLIDES.length) % SLIDES.length;
+    slides.forEach((el, k) => el.classList.toggle("on", k === cur));
+    [...dots.children].forEach((d, k) => d.classList.toggle("on", k === cur));
+    $("heroBar").textContent = SLIDES[cur].label.replace("  ", "\u00a0\u00a0");
+    $("heroMatch").textContent = `✦ Best match · ${SLIDES[cur].match}%`;
+  }
+  const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function restart() { clearInterval(timer); if (!still) timer = setInterval(() => { if (!$("welcome").hidden) show(cur + 1); }, 4000); }
+  show(0); restart();
 })();
 
 // ---------------------------------------------------------------- import pipeline
