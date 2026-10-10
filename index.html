@@ -513,7 +513,7 @@
 // ============================================================================
 import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.128.0/+esm";
 
-const VERSION = "v0.6.0 · 10 Oct 2026";   // bump on every deploy (shown in the footer)
+const VERSION = "v0.6.1 · 10 Oct 2026";   // bump on every deploy (shown in the footer)
 const CLIENT_ID = "708106056499-vmeb6vvjvoajvpv9b3v0dq5h0r37h848.apps.googleusercontent.com";
 const SCOPES = "openid https://www.googleapis.com/auth/userinfo.email " +
   "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/drive.file";
@@ -551,7 +551,36 @@ async function pool(items, limit, fn) {
 }
 
 // ---------------------------------------------------------------- Google auth
-let tokenClient = null, accessToken = null, me = null;
+let tokenClient = null, accessToken = null, me = null, expiryTimer = null;
+
+// The Google access token (≈1 h) is kept in localStorage with its expiry, so a refresh or a
+// new tab continues the session until Google's token runs out. Cleared on sign-out / 401.
+const SESSION_KEY = "posey.session";
+function saveSession(token, expiresInSec) {
+  const exp = Date.now() + Math.max(0, (Number(expiresInSec) || 3600) - 60) * 1000;
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify({ token, exp })); } catch {}
+  scheduleExpiry(exp);
+}
+function loadSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+    if (s && s.token && s.exp > Date.now()) { scheduleExpiry(s.exp); return s.token; }
+  } catch {}
+  clearSession();
+  return null;
+}
+function clearSession() {
+  try { localStorage.removeItem(SESSION_KEY); } catch {}
+  clearTimeout(expiryTimer);
+}
+function scheduleExpiry(exp) {
+  clearTimeout(expiryTimer);
+  expiryTimer = setTimeout(() => {
+    accessToken = null; clearSession();
+    $("signin").hidden = false; $("signin").textContent = "Sign in again";
+    toast("Google session expired — sign in again to keep editing", 8000);
+  }, Math.max(0, exp - Date.now()));
+}
 
 function initGoogle() {
   if (!window.google?.accounts?.oauth2) { setTimeout(initGoogle, 150); return; }
@@ -560,11 +589,19 @@ function initGoogle() {
     callback: async (resp) => {
       if (resp.error) { toast("Google sign-in failed: " + resp.error); return; }
       accessToken = resp.access_token;
+      saveSession(resp.access_token, resp.expires_in);
+      if (me) { $("signin").hidden = true; toast("Signed in again"); return; }   // session renewed mid-use
       await onSignedIn();
     },
   });
 }
 initGoogle();
+
+// Resume a still-valid session from an earlier load (refresh / new tab).
+{
+  const saved = loadSession();
+  if (saved) { accessToken = saved; onSignedIn(); }
+}
 const signIn = () => tokenClient && tokenClient.requestAccessToken({ prompt: "" });
 $("signin").onclick = signIn; $("signin2").onclick = signIn;
 $("albumSearch").oninput = () => render();
@@ -573,7 +610,7 @@ class AuthError extends Error {}
 async function gfetch(url, opts = {}) {
   const res = await fetch(url, { ...opts, headers: { Authorization: "Bearer " + accessToken, ...(opts.headers || {}) } });
   if (res.status === 401) {
-    accessToken = null; $("signin").hidden = false; $("signin").textContent = "Sign in again";
+    accessToken = null; clearSession(); $("signin").hidden = false; $("signin").textContent = "Sign in again";
     throw new AuthError("Google session expired — sign in again");
   }
   if (!res.ok) throw new Error(`Drive ${res.status}: ${(await res.text()).slice(0, 160)}`);
@@ -600,8 +637,11 @@ $("avatar").onclick = (e) => { e.stopPropagation(); setMenu(menu.hidden); };
 document.addEventListener("click", (e) => { if (!$("account").contains(e.target)) setMenu(false); });
 $("reloadBtn").onclick = () => { setMenu(false); loadLibrary(); };
 $("signout").onclick = () => {
-  if (accessToken) google.accounts.oauth2.revoke(accessToken, () => {});
-  location.reload();
+  clearSession();
+  const done = () => location.reload();
+  // Let the revoke request finish before reloading (fallback after 1.5 s).
+  if (accessToken && window.google?.accounts?.oauth2) { google.accounts.oauth2.revoke(accessToken, done); setTimeout(done, 1500); }
+  else done();
 };
 
 // ---------------------------------------------------------------- Drive layer
