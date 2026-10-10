@@ -26,7 +26,7 @@
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
-  html, body { height: 100%; }
+  html, body { min-height: 100%; }
   body {
     margin: 0;
     background:
@@ -34,6 +34,7 @@
       radial-gradient(50vw 50vh at 100% 100%, rgba(99, 102, 241, 0.14), transparent 70%),
       var(--bg);
     background-attachment: fixed;
+    display: flex; flex-direction: column; min-height: 100vh;   /* footer sits at the bottom */
     color: var(--text);
     font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
@@ -108,7 +109,7 @@
   .menu button:hover { background: rgba(255, 255, 255, 0.08); }
 
   /* ---- layout ---- */
-  .layout { display: grid; grid-template-columns: 240px 1fr; gap: 16px; padding: 16px; max-width: 1400px; margin: 0 auto; }
+  .layout { display: grid; grid-template-columns: 250px 1fr; gap: 18px; padding: 16px; max-width: 1400px; margin: 0 auto; width: 100%; }
   aside { position: sticky; top: 76px; align-self: start; }
   .album-list { display: flex; flex-direction: column; gap: 6px; }
   .album-item {
@@ -124,17 +125,36 @@
   }
   .album-item .name { font-weight: 600; font-size: 14px; }
   .album-item .count { font-size: 12px; color: var(--muted); }
-  .new-album { margin-top: 8px; width: 100%; justify-content: center; border-style: dashed; }
+  /* "New album": same size as an album entry, styled as a button */
+  .album-item.new-album { width: 100%; background: var(--accent-soft); border: 1.5px solid var(--accent); }
+  .album-item.new-album:hover { background: rgba(236, 72, 153, 0.32); }
+  .album-item .cover.plus {
+    display: flex; align-items: center; justify-content: center; font-size: 22px; color: #fff;
+    background: rgba(236, 72, 153, 0.35);
+  }
+  .search { margin: 10px 0 8px; padding: 8px 12px; font-size: 14px; }
 
   .album-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
   .album-head h2 { margin: 0; font-size: 20px; }
   .album-head .spacer { flex: 1; }
 
+  /* The whole album frame is the drop zone; the hint stays at the top. */
   .dropzone {
-    border: 1.5px dashed rgba(255, 255, 255, 0.28); border-radius: 18px;
-    padding: 18px; text-align: center; margin-bottom: 16px; color: var(--muted);
+    border: 1.5px dashed rgba(255, 255, 255, 0.28); border-radius: 20px;
+    padding: 14px 16px 16px; color: var(--muted);
+    transition: border-color 0.2s, background 0.2s;
   }
   .dropzone.over { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+  .dz-hint { text-align: center; padding: 4px 0 14px; user-select: none; font-size: 14px; }
+  .card.add {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    background: rgba(236, 72, 153, 0.1); border: 1.5px dashed rgba(236, 72, 153, 0.7); color: var(--text);
+    font: inherit; padding: 0;
+  }
+  .card.add:hover { background: rgba(236, 72, 153, 0.2); border-color: var(--accent); }
+  .card.add .plus { font-size: 34px; line-height: 1; }
+  .card.add .sub { font-size: 12px; color: var(--muted); }
+  .panel { padding: 18px; border-radius: 20px; background: var(--glass); border: 1px solid var(--glass-edge); }
 
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
   .card {
@@ -168,6 +188,7 @@
     display: flex; align-items: flex-start; justify-content: center;
     padding: 6vh 16px 16px; overflow: auto;
   }
+  .modal.center { align-items: center; padding: 16px; }
   .sheet {
     width: 100%; max-width: 980px; border-radius: 20px; padding: 18px;
     background: var(--glass-strong); border: 1px solid var(--glass-edge);
@@ -176,9 +197,10 @@
   .sheet.small { max-width: 460px; }
   .sheet h3 { margin: 0 0 12px; font-size: 17px; }
   .sheet .row { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 16px; }
-  .detail { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; }
+  .detail { display: grid; grid-template-columns: auto minmax(260px, 340px); gap: 22px; justify-content: start; }
   .stage {
-    position: relative; width: 100%; aspect-ratio: 9 / 16; max-height: 76vh;
+    /* Height-driven 9:16 frame: the whole pose fits under the header and title row. */
+    position: relative; height: min(calc(100svh - 230px), 980px); max-width: 100%; aspect-ratio: 9 / 16;
     border-radius: 14px; overflow: hidden;
     background: var(--stage);
     background-image:
@@ -212,7 +234,7 @@
     padding: 10px 16px; border-radius: 999px; background: var(--glass-strong); border: 1px solid var(--glass-edge);
     backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); font-size: 14px; max-width: 90vw;
   }
-  footer { text-align: center; padding: 24px 16px; font-size: 13px; color: var(--muted); }
+  footer { text-align: center; padding: 24px 16px; font-size: 13px; color: var(--muted); margin-top: auto; }
 
   /* ---- brand + landing ---- */
   .brand { display: flex; align-items: center; gap: 10px; }
@@ -307,8 +329,6 @@
     aside { position: static; }
     .album-list { flex-direction: row; overflow-x: auto; padding-bottom: 4px; }
     .album-item { flex: none; }
-    .new-album { width: auto; margin-top: 0; }
-    .aside-row { display: flex; gap: 8px; align-items: center; }
     .detail { grid-template-columns: 1fr; }
     .activity { left: 16px; width: auto; }
     header h1 span { display: none; }
@@ -382,64 +402,72 @@
 <!-- Signed in -->
 <div id="app" class="layout" hidden>
   <aside>
-    <div class="aside-row">
-      <div id="albumList" class="album-list"></div>
-      <button id="newAlbumBtn" class="btn new-album">＋ New album</button>
-    </div>
+    <button id="newAlbumBtn" class="album-item new-album">
+      <span class="cover plus">＋</span><span class="name">New album</span>
+    </button>
+    <input id="albumSearch" class="field search" type="search" placeholder="Search albums" autocomplete="off">
+    <div id="albumList" class="album-list"></div>
+    <div id="noMatch" class="muted" style="font-size:13px;padding:8px 10px" hidden>No album matches</div>
   </aside>
   <main>
     <div id="loading" class="empty">Loading your library from Drive…</div>
+
+    <!-- Album: the whole frame is the drop zone, the add tile is always first -->
     <div id="albumView" hidden>
       <div class="album-head">
         <h2 id="albumTitle"></h2>
         <span id="albumCount" class="muted"></span>
         <span class="spacer"></span>
-        <button id="addBtn" class="btn primary">＋ Add images</button>
         <button id="analyzeAllBtn" class="btn" title="Run Claude on poses without keypoints">✦ Analyse</button>
         <button id="renameBtn" class="btn">Rename</button>
         <button id="deleteAlbumBtn" class="btn danger">Delete</button>
         <input id="fileInput" type="file" accept="image/*" multiple hidden>
       </div>
-      <div id="dropzone" class="dropzone">Drop photos here — one person, head to feet, works best</div>
-      <div id="grid" class="grid"></div>
-      <div id="emptyAlbum" class="empty" hidden>No poses yet — drop photos above.</div>
+      <div id="dropzone" class="dropzone">
+        <div class="dz-hint">Drop photos anywhere here — one person, head to feet, works best</div>
+        <div id="grid" class="grid"></div>
+      </div>
     </div>
+
+    <!-- One pose, shown in place of the album grid -->
+    <div id="poseView" hidden>
+      <div class="album-head">
+        <button id="backBtn" class="btn" title="Back to the album (Esc)">←</button>
+        <h2 id="poseName"></h2>
+        <span class="spacer"></span>
+        <button id="prevPoseBtn" class="icon-btn" title="Previous pose (←)">‹</button>
+        <button id="nextPoseBtn" class="icon-btn" title="Next pose (→)">›</button>
+      </div>
+      <div class="detail panel">
+        <div class="stage" id="stage">
+          <img id="poseImg" alt="">
+          <svg id="kpSvg" viewBox="0 0 1080 1920" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <div class="facts">
+          <div><div class="label">Status</div><div id="poseStatus"></div></div>
+          <div><div class="label">Claude</div><div id="poseSummary" class="muted"></div></div>
+          <div class="muted" style="font-size:13px">Drag the dots to correct Claude's keypoints, then
+            save. The phone uses them for auto-fit and best-match.</div>
+          <div class="actions">
+            <button id="savePointsBtn" class="btn primary" disabled>Save points</button>
+            <button id="reanalyzeBtn" class="btn">✦ Re-analyse</button>
+            <button id="keepBtn" class="btn" hidden>Keep anyway</button>
+          </div>
+          <div><div class="label">Album</div><select id="moveSelect"></select></div>
+          <div class="actions" style="margin-top:auto">
+            <button id="deletePoseBtn" class="btn danger">Delete pose</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="noAlbums" class="empty" hidden>No albums yet. Create one with “＋ New album”, or import
       photos in the Posey app — they appear here after the phone syncs.</div>
   </main>
 </div>
 
-<!-- Pose detail -->
-<div id="poseModal" class="modal" hidden>
-  <div class="sheet">
-    <div class="detail">
-      <div class="stage" id="stage">
-        <img id="poseImg" alt="">
-        <svg id="kpSvg" viewBox="0 0 1080 1920" preserveAspectRatio="xMidYMid meet"></svg>
-      </div>
-      <div class="facts">
-        <div><div class="label">Pose</div><div id="poseName" style="font-weight:600"></div></div>
-        <div><div class="label">Status</div><div id="poseStatus"></div></div>
-        <div><div class="label">Claude</div><div id="poseSummary" class="muted"></div></div>
-        <div class="muted" style="font-size:13px">Drag the dots to correct Claude's keypoints, then
-          save. The phone uses them for auto-fit and best-match.</div>
-        <div class="actions">
-          <button id="savePointsBtn" class="btn primary" disabled>Save points</button>
-          <button id="reanalyzeBtn" class="btn">✦ Re-analyse</button>
-          <button id="keepBtn" class="btn" hidden>Keep anyway</button>
-        </div>
-        <div><div class="label">Album</div><select id="moveSelect"></select></div>
-        <div class="actions" style="margin-top:auto">
-          <button id="deletePoseBtn" class="btn danger">Delete pose</button>
-          <button id="closePoseBtn" class="btn">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Text prompt / confirm -->
-<div id="askModal" class="modal" hidden>
+<div id="askModal" class="modal center" hidden>
   <div class="sheet small">
     <h3 id="askTitle"></h3>
     <p id="askMsg" class="muted" hidden></p>
@@ -452,7 +480,7 @@
 </div>
 
 <!-- Settings -->
-<div id="settingsModal" class="modal" hidden>
+<div id="settingsModal" class="modal center" hidden>
   <div class="sheet small">
     <h3>Settings</h3>
     <div class="facts">
@@ -485,7 +513,7 @@
 // ============================================================================
 import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.128.0/+esm";
 
-const VERSION = "v0.5.0 · 10 Oct 2026";   // bump on every deploy (shown in the footer)
+const VERSION = "v0.6.0 · 10 Oct 2026";   // bump on every deploy (shown in the footer)
 const CLIENT_ID = "708106056499-vmeb6vvjvoajvpv9b3v0dq5h0r37h848.apps.googleusercontent.com";
 const SCOPES = "openid https://www.googleapis.com/auth/userinfo.email " +
   "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/drive.file";
@@ -539,6 +567,7 @@ function initGoogle() {
 initGoogle();
 const signIn = () => tokenClient && tokenClient.requestAccessToken({ prompt: "" });
 $("signin").onclick = signIn; $("signin2").onclick = signIn;
+$("albumSearch").oninput = () => render();
 
 class AuthError extends Error {}
 async function gfetch(url, opts = {}) {
@@ -716,7 +745,10 @@ const touchAlbum = (al) => { al.updatedAt = now(); };
 // ---------------------------------------------------------------- rendering
 function render() {
   const list = $("albumList"); list.innerHTML = "";
-  for (const al of albumsDoc.albums) {
+  const q = $("albumSearch").value.trim().toLowerCase();
+  const shown = albumsDoc.albums.filter((a) => !q || a.name.toLowerCase().includes(q));
+  $("noMatch").hidden = !(q && shown.length === 0);
+  for (const al of shown) {
     const ready = al.poses.filter((id) => poses.get(id)?.json.status === "READY").length;
     const coverId = al.poses.find((id) => poses.get(id)?.url);
     const b = document.createElement("button");
@@ -725,15 +757,24 @@ function render() {
     if (coverId) b.querySelector(".cover").style.backgroundImage = `url("${poses.get(coverId).url}")`;
     b.querySelector(".name").textContent = al.name;
     b.querySelector(".count").textContent = `${ready} pose${ready === 1 ? "" : "s"}`;
-    b.onclick = () => { currentAlbum = al.id; render(); };
+    b.onclick = () => { currentAlbum = al.id; closePose(true); render(); };
     list.appendChild(b);
   }
   const al = album();
-  $("noAlbums").hidden = !!al; $("albumView").hidden = !al;
+  if (openId && (!al || !al.poses.includes(openId) || !poses.has(openId))) openId = null;
+  $("noAlbums").hidden = !!al;
+  $("albumView").hidden = !al || !!openId;
+  $("poseView").hidden = !al || !openId;
   if (!al) return;
   $("albumTitle").textContent = al.name;
   $("albumCount").textContent = `${al.poses.length} item${al.poses.length === 1 ? "" : "s"}`;
   const grid = $("grid"); grid.innerHTML = "";
+  // Add tile: always the first card, same size as a pose.
+  const add = document.createElement("button");
+  add.className = "card add";
+  add.innerHTML = `<span class="plus">＋</span><span>Add images</span><span class="sub">or drop them here</span>`;
+  add.onclick = () => $("fileInput").click();
+  grid.appendChild(add);
   al.poses.forEach((id, i) => {
     const p = poses.get(id);
     const card = document.createElement("div");
@@ -749,7 +790,6 @@ function render() {
     card.onclick = () => p && openPose(id);
     grid.appendChild(card);
   });
-  $("emptyAlbum").hidden = al.poses.length > 0;
 }
 
 function statusChip(p, id) {
@@ -780,14 +820,18 @@ function ask({ title, message = null, input = null, ok = "OK", danger = false })
     $("askInput").onkeydown = (e) => { if (e.key === "Enter") $("askOk").click(); if (e.key === "Escape") done(null); };
   });
 }
-for (const id of ["askModal", "settingsModal", "poseModal"]) {
-  $(id).addEventListener("click", (e) => { if (e.target === $(id)) ($(id === "askModal" ? "askCancel" : id === "poseModal" ? "closePoseBtn" : "settingsClose")).click(); });
+for (const id of ["askModal", "settingsModal"]) {
+  $(id).addEventListener("click", (e) => { if (e.target === $(id)) $(id === "askModal" ? "askCancel" : "settingsClose").click(); });
 }
 document.addEventListener("keydown", (e) => {
-  if (e.key !== "Escape") return;
-  setMenu(false);
-  if (!$("poseModal").hidden) $("closePoseBtn").click();
-  if (!$("settingsModal").hidden) $("settingsClose").click();
+  const typing = /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement?.tagName || "");
+  const dialogOpen = !$("askModal").hidden || !$("settingsModal").hidden;
+  if (e.key === "Escape") {
+    setMenu(false);
+    if (!$("settingsModal").hidden) { $("settingsClose").click(); return; }
+    if (!dialogOpen && openId) $("backBtn").click();
+  }
+  if (openId && !typing && !dialogOpen && (e.key === "ArrowLeft" || e.key === "ArrowRight")) stepPose(e.key === "ArrowLeft" ? -1 : 1);
 });
 
 // ---------------------------------------------------------------- albums
@@ -1120,7 +1164,6 @@ async function importOne(al, id, file) {
   if (json.status !== "READY") setTimeout(() => { jobs.delete(id); renderActivity(); render(); }, 5000);
 }
 
-$("addBtn").onclick = () => $("fileInput").click();
 $("fileInput").onchange = (e) => { importFiles(e.target.files); e.target.value = ""; };
 const dz = $("dropzone");
 for (const ev of ["dragenter", "dragover"]) document.addEventListener(ev, (e) => { if (!$("app").hidden) { e.preventDefault(); dz.classList.add("over"); } });
@@ -1157,11 +1200,12 @@ async function reanalyse(id) {
 // ---------------------------------------------------------------- pose detail + keypoint editor
 let openId = null, editPoints = null, dirty = false;
 
-function openPose(id) {
+async function openPose(id) {
+  if (dirty && openId !== id && !(await ask({ title: "Discard keypoint changes?", ok: "Discard", danger: true }))) return;
   const p = poses.get(id); openId = id; dirty = false;
   const al = album();
   $("poseImg").src = p.url || "";
-  $("poseName").textContent = `${al?.name || ""} ${String((al?.poses.indexOf(id) ?? 0) + 1).padStart(2, "0")}`;
+  $("poseName").textContent = `${String((al?.poses.indexOf(id) ?? 0) + 1).padStart(2, "0")} / ${String(al?.poses.length || 0).padStart(2, "0")}`;
   const st = p.json.status;
   $("poseStatus").innerHTML = "";
   const s = document.createElement("span");
@@ -1176,8 +1220,30 @@ function openPose(id) {
   const sel = $("moveSelect"); sel.innerHTML = "";
   for (const x of albumsDoc.albums) { const o = new Option(x.name, x.id, false, x.id === currentAlbum); sel.add(o); }
   drawPoints();
-  $("poseModal").hidden = false;
+  const idx = al ? al.poses.indexOf(id) : -1;
+  $("prevPoseBtn").disabled = idx <= 0; $("nextPoseBtn").disabled = !al || idx >= al.poses.length - 1;
+  $("backBtn").textContent = `← ${al?.name || "Album"}`;
+  render();
+  window.scrollTo({ top: 0 });
 }
+
+/** Back to the album grid (force = skip the unsaved-changes check). */
+async function closePose(force = false) {
+  if (!openId) return true;
+  if (!force && dirty && !(await ask({ title: "Discard keypoint changes?", ok: "Discard", danger: true }))) return false;
+  openId = null; dirty = false; render();
+  return true;
+}
+
+function stepPose(delta) {
+  const al = album(); if (!al || !openId) return;
+  const list = al.poses.filter((x) => poses.has(x));
+  const i = list.indexOf(openId) + delta;
+  if (i >= 0 && i < list.length) openPose(list[i]);
+}
+$("prevPoseBtn").onclick = () => stepPose(-1);
+$("nextPoseBtn").onclick = () => stepPose(1);
+$("backBtn").onclick = () => closePose();
 
 function drawPoints() {
   const svg = $("kpSvg"); svg.innerHTML = "";
@@ -1241,14 +1307,14 @@ $("moveSelect").onchange = async (e) => {
   if (!to || !from || to.id === from.id) return;
   from.poses = from.poses.filter((x) => x !== openId); touchAlbum(from);
   to.poses.push(openId); touchAlbum(to);
-  $("poseModal").hidden = true; render();
+  dirty = false; openId = null; render();
   try { await saveAlbums(); toast(`Moved to ${to.name}`); } catch (er) { toast(er.message); }
 };
 $("deletePoseBtn").onclick = async () => {
   const okd = await ask({ title: "Delete this pose?", message: "It's removed from Drive and, after its next sync, from the phone.", ok: "Delete", danger: true });
   if (!okd) return;
   const id = openId, p = poses.get(id), al = album();
-  $("poseModal").hidden = true;
+  dirty = false; openId = null;
   albumsDoc.deleted.poses[id] = now();
   if (al) { al.poses = al.poses.filter((x) => x !== id); touchAlbum(al); }
   for (const f of Object.values(p.files)) if (f) deleteFile(f);
@@ -1256,10 +1322,7 @@ $("deletePoseBtn").onclick = async () => {
   poses.delete(id); render();
   try { await saveAlbums(); toast("Pose deleted"); } catch (e) { toast(e.message); }
 };
-$("closePoseBtn").onclick = async () => {
-  if (dirty && !(await ask({ title: "Discard keypoint changes?", ok: "Discard", danger: true }))) return;
-  $("poseModal").hidden = true; openId = null;
-};
+
 </script>
 </body>
 </html>
