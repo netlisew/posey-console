@@ -16,6 +16,7 @@ flow with the **Web** OAuth client of the `posey-photo-taker` Cloud project and 
   public), framed 1080×1920 like the app's poses, then **checked + analysed by Claude**
   (one person? head to feet in frame? + body keypoints) with the same prompt and schema as
   the app. Rejects show a red chip; open one to *Keep anyway*.
+- **Research** tab: the published studies behind the pose directory (verified DOIs), what Posey does with each, and their limits.
 - **Pose detail**: drag Claude's keypoints to correct them and **Save points** (marked
   `manual`), re‑analyse, move to another album, or delete.
 - **Settings (⚙)**: Anthropic API key (kept in this browser's localStorage only) and model.

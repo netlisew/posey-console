@@ -187,15 +187,36 @@
     background: var(--glass-strong); border: 1px solid var(--glass-edge);
   }
   svg.fig { overflow: visible; }
+  .research-intro { margin: 4px 0 6px; max-width: 70ch; color: var(--muted); font-size: 15px; line-height: 1.55; }
+  .research-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 14px; }
+  .research-card {
+    display: flex; flex-direction: column; gap: 10px; padding: 16px 18px; border-radius: 18px;
+    background: var(--glass); border: 1px solid var(--glass-edge); font-size: 14px; line-height: 1.55;
+  }
+  .research-card p { margin: 0; }
+  .research-card .rhead { display: flex; align-items: center; gap: 12px; }
+  .research-card h3 { margin: 0; font-size: 16px; line-height: 1.3; }
+  .research-card .rfigs { display: flex; gap: 2px; flex: none; }
+  .research-card .rfig { all: unset; width: 30px; height: 48px; color: var(--text); cursor: pointer; border-radius: 6px; transition: background-color 0.15s; }
+  .research-card .rfig:hover:not([disabled]) { background: var(--accent-soft); }
+  .research-card .rfig[disabled] { cursor: default; }
+  .research-card .rfig svg.fig .prop { display: none; }
+  .research-card.retired .rfig { opacity: 0.45; }
+  .research-card .in-posey b, .research-card .caveat b { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; margin-right: 6px; }
+  .research-card .in-posey b { color: var(--accent); }
+  .research-card .caveat { color: var(--muted); font-size: 13px; }
+  .research-card .refs { margin: auto 0 0; padding: 10px 0 0 18px; font-size: 12.5px; color: var(--muted); display: flex; flex-direction: column; gap: 6px; user-select: text; }
+  .research-card .refs a { color: var(--accent); overflow-wrap: anywhere; }
   .type-fig { width: 34px; height: 54px; flex: none; color: var(--text); }
   .tag-pick .opt { display: inline-flex; align-items: center; gap: 6px; }
   .tag-pick .opt .mini { width: 12px; height: 19px; display: inline-block; }
   .tag-pick .opt .mini svg.fig .prop, .type-card .fig-badge svg.fig .prop { display: none; }
   svg.fig line, svg.fig path, svg.fig rect, svg.fig ellipse { fill: none; stroke-linecap: round; stroke-linejoin: round; }
-  svg.fig .bones line { stroke: currentColor; stroke-width: 3.2; }
+  svg.fig .bones line, svg.fig .bones path { stroke: currentColor; stroke-width: 3; fill: none; stroke-linecap: round; }
+  svg.fig .hair path { stroke: currentColor; stroke-width: 2.2; fill: none; stroke-linecap: round; opacity: 0.7; }
   svg.fig .far { opacity: 0.35; }
   svg.fig .prop * { stroke: var(--muted); stroke-width: 1.6; }
-  svg.fig .head { fill: none; stroke: currentColor; stroke-width: 3.2; }
+  svg.fig .head { fill: var(--head-fill, transparent); stroke: currentColor; stroke-width: 3; }
   svg.fig .head.back { fill: currentColor; fill-opacity: 0.35; }
   svg.fig .face { stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
   svg.fig .eye { fill: var(--accent); }
@@ -552,6 +573,7 @@
     <button data-tab="photos" class="on">Photos</button>
     <button data-tab="poses">Poses</button>
     <button data-tab="models">Models</button>
+    <button data-tab="research">Research</button>
   </nav>
   <div class="search-wrap" id="searchWrap" hidden>
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
@@ -710,6 +732,7 @@
 
     <!-- Central search results -->
     <div id="searchView" hidden></div>
+    <div id="researchView" hidden></div>
 
     <div id="noAlbums" class="empty" hidden>No albums yet. Create one with “＋ New album”, or import
       photos in the Posey app — they appear here after the phone syncs.</div>
@@ -768,8 +791,10 @@ import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.128.0/+e
 // Directory of well-known modelling poses (pose-directory.json, shared with the app).
 const DIR = await fetch("pose-directory.json").then((r) => r.json()).catch(() => ({ groups: [], poses: [] }));
 const POSE_TYPES = new Map(DIR.poses.map((p) => [p.id, p]));
+// Retired entries stay so old tags still show a name, but are never offered or tagged again.
+const ACTIVE = DIR.poses.filter((p) => !p.retired);
 
-const VERSION = "v0.7.2 · 15 Nov 2026";   // bump on every deploy (shown in the footer)
+const VERSION = "v0.8.0 · 15 Nov 2026";   // bump on every deploy (shown in the footer)
 const CLIENT_ID = "708106056499-vmeb6vvjvoajvpv9b3v0dq5h0r37h848.apps.googleusercontent.com";
 const SCOPES = "openid https://www.googleapis.com/auth/userinfo.email " +
   "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/drive.file";
@@ -1121,12 +1146,13 @@ const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 function render() {
   const q = $("globalSearch").value.trim().toLowerCase();
   document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("on", !q && b.dataset.tab === tab));
-  for (const v of ["albumView", "poseView", "noAlbums", "posesView", "poseTypeView", "modelsView", "searchView"]) $(v).hidden = true;
+  for (const v of ["albumView", "poseView", "noAlbums", "posesView", "poseTypeView", "modelsView", "searchView", "researchView"]) $(v).hidden = true;
   $("app").classList.toggle("full", !!q || tab !== "photos");
   refreshModelNames();
   if (q) return renderSearch(q);
   if (tab === "poses") return openType ? renderPoseType() : renderPoses();
   if (tab === "models") return openModel ? renderModel() : renderModels_();
+  if (tab === "research") return renderResearch();
   renderPhotos();
 }
 
@@ -1166,99 +1192,217 @@ function typeCard(t, ids) {
   return card;
 }
 const LOGO_SVG = `<svg viewBox="34 30 40 58" width="100%" height="100%" aria-hidden="true"><circle cx="54" cy="32" r="7" fill="currentColor"/><path fill="currentColor" d="M50 42C46 43 44 47 44 52L44 62 42 76 47 76 49 63 51 63 51 82 56 82 56 63 58 63 60 76 65 76 63 62 63 54 69 60 72 57 64 49C62 45 59 42 55 42Z"/></svg>`;
-/* ---- pose skeletons: a stick figure per directory pose, drawn in a 100×160 box (viewer's left = "l") ---- */
-const FIG_BASE = { h: [50, 20], n: [50, 34], ls: [38, 38], rs: [62, 38], le: [34, 58], re: [66, 58], lw: [33, 78], rw: [67, 78],
-  lh: [43, 78], rh: [57, 78], lk: [42, 110], rk: [58, 110], la: [42, 142], ra: [58, 142] };
-const FIG_SIDE = { h: [50, 20], n: [50, 34], ls: [48, 38], rs: [52, 38], le: [52, 58], re: [48, 58], lw: [53, 78], rw: [47, 78],
-  lh: [48, 78], rh: [52, 78], lk: [50, 110], rk: [52, 110], la: [49, 142], ra: [53, 142] };
+/* ---- pose skeletons: a feminine stick figure per directory pose, drawn in a 100×160 box (viewer's left = "l").
+   Narrow shoulders, curved waist, wider hips, long hair, knees close and pointed feet. ---- */
+const FIG_BASE = { h: [50, 20], n: [50, 33], ls: [41, 37], rs: [59, 37], le: [37, 57], re: [63, 57], lw: [38, 76], rw: [62, 76],
+  lh: [41, 76], rh: [59, 76], lk: [45, 108], rk: [55, 108], la: [46, 141], ra: [54, 141] };
+const FIG_SIDE = { h: [50, 20], n: [50, 33], ls: [48, 37], rs: [52, 37], le: [53, 57], re: [49, 57], lw: [55, 76], rw: [51, 76],
+  lh: [47, 76], rh: [51, 76], lk: [51, 108], rk: [53, 108], la: [49, 141], ra: [53, 141] };
 const POSE_FIGS = {
-  "contrapposto": { ls: [38, 41], rs: [62, 36], le: [35, 61], lw: [36, 81], re: [66, 56], rw: [68, 76], lh: [44, 76], rh: [57, 81], lk: [44, 110], la: [45, 142], rk: [53, 112], ra: [51, 142], h: [48, 20], n: [49, 34] },
-  "power-stance": { lh: [42, 78], rh: [58, 78], lk: [33, 110], rk: [67, 110], la: [25, 142], ra: [75, 142], le: [31, 58], lw: [29, 78], re: [69, 58], rw: [71, 78] },
-  "feet-together": { le: [36, 58], lw: [39, 78], re: [64, 58], rw: [61, 78], lh: [45, 78], rh: [55, 78], lk: [47, 110], rk: [53, 110], la: [48, 142], ra: [52, 142] },
-  "crossed-legs": { lh: [44, 78], rh: [56, 78], lk: [47, 110], la: [57, 142], rk: [53, 110], ra: [43, 142] },
-  "flamingo": { lh: [44, 78], lk: [45, 110], la: [46, 142], rh: [56, 78], rk: [68, 100], ra: [53, 116], le: [28, 54], lw: [20, 68], re: [72, 54], rw: [80, 68], fr: [53, 120] },
-  "leg-pop": { lh: [43, 77], lk: [43, 110], la: [43, 142], rh: [57, 79], rk: [53, 103], ra: [59, 134], fr: [58, 145] },
-  "tiptoe": { dy: -7, fl: [43, 146], fr: [57, 146], up: true },
-  "three-quarter": { ls: [42, 38], rs: [60, 39], le: [40, 58], lw: [40, 78], re: [65, 58], rw: [66, 78], lh: [46, 78], rh: [57, 78], lk: [46, 110], la: [46, 142], rk: [57, 110], ra: [57, 142], far: "l", gaze: [-0.4, 0] },
+  "contrapposto": { h: [48, 20], n: [49, 33], ls: [41, 39], rs: [59, 35], le: [38, 59], lw: [40, 78], re: [63, 55], rw: [62, 74],
+    lh: [43, 74], rh: [60, 79], lk: [45, 108], la: [46, 141], rk: [52, 111], ra: [49, 141], fr: [46, 145] },
+  "power-stance": { lk: [36, 108], rk: [64, 108], la: [29, 141], ra: [71, 141] },
+  "feet-together": { lk: [48, 108], rk: [52, 108], la: [48.5, 141], ra: [51.5, 141], le: [39, 57], lw: [42, 76], re: [61, 57], rw: [58, 76] },
+  "crossed-legs": { lk: [48, 108], la: [56, 141], rk: [52, 108], ra: [44, 141] },
+  "flamingo": { lk: [46, 108], la: [47, 141], rk: [64, 98], ra: [52, 114], fr: [50, 119], le: [32, 52], lw: [26, 66], re: [68, 52], rw: [74, 66] },
+  "leg-pop": { lh: [41, 75], rh: [59, 77], lk: [45, 108], la: [46, 141], rk: [53, 101], ra: [58, 132], fr: [57, 145] },
+  "tiptoe": { dy: -7, fl: [45, 146], fr: [55, 146], up: true },
+  "three-quarter": { ls: [44, 37], rs: [58, 38], le: [43, 57], lw: [43, 76], re: [62, 57], rw: [62, 76], lh: [45, 76], rh: [58, 76],
+    lk: [48, 108], la: [48, 141], rk: [56, 108], ra: [55, 141], far: "l", gaze: [-0.4, 0] },
   "profile": { side: true, far: "r", gaze: [1, 0] },
   "back-view": { back: true },
-  "hand-on-hip": { re: [75, 55], rw: [59, 75] },
-  "hands-on-hips": { le: [25, 55], lw: [41, 75], re: [75, 55], rw: [59, 75] },
-  "arms-crossed": { le: [36, 62], lw: [59, 54], re: [64, 62], rw: [41, 57] },
-  "hands-in-pockets": { le: [36, 58], lw: [44, 83], re: [64, 58], rw: [56, 83] },
-  "hand-in-hair": { re: [73, 22], rw: [57, 12] },
-  "hands-in-hair": { le: [27, 22], lw: [43, 12], re: [73, 22], rw: [57, 12] },
-  "hand-to-face": { re: [63, 54], rw: [54, 28], h: [50, 19] },
-  "arms-raised": { le: [31, 22], lw: [29, 4], re: [69, 22], rw: [71, 4] },
+  "hand-on-hip": { re: [70, 54], rw: [59, 72], lh: [41, 77], rh: [61, 74] },
+  "hands-on-hips": { le: [30, 54], lw: [43, 68], re: [70, 54], rw: [57, 68], lh: [40, 77], rh: [61, 74], lk: [46, 108], rk: [54, 109], ra: [52, 141] },
+  "arms-crossed": { le: [39, 60], lw: [58, 53], re: [61, 60], rw: [42, 56] },
+  "hands-in-pockets": { le: [37, 57], lw: [43, 80], re: [63, 57], rw: [57, 80] },
+  "hand-in-hair": { re: [70, 22], rw: [57, 13], h: [49, 21], tilt: 10 },
+  "hands-in-hair": { le: [30, 22], lw: [43, 13], re: [70, 22], rw: [57, 13] },
+  "hand-to-face": { re: [61, 52], rw: [54, 28], h: [50, 19] },
+  "arms-raised": { le: [34, 20], lw: [36, 3], re: [66, 20], rw: [64, 3] },
   "arms-relaxed": {},
-  "collar-grab": { le: [34, 54], lw: [46, 38], re: [66, 54], rw: [54, 38] },
-  "holding-accessory": { re: [70, 56], rw: [74, 72], prop: "bag" },
+  "collar-grab": { le: [37, 52], lw: [46, 37], re: [63, 52], rw: [54, 37] },
+  "holding-accessory": { re: [66, 54], rw: [70, 70], prop: "bag" },
   "over-shoulder": { back: true, h: [52, 20], gaze: [1, 0.1], look: true },
-  "head-tilt": { h: [46, 21], tilt: -22, gaze: [0, 0] },
+  "head-tilt": { h: [46, 21], tilt: -22 },
   "chin-up": { h: [50, 19], gaze: [0, -1], look: true },
   "gaze-down": { h: [50, 22], gaze: [0.8, 1], look: true },
   "looking-away": { gaze: [1, 0], look: true },
-  "walking": { side: true, far: "l", gaze: [1, 0], lk: [57, 108], la: [61, 142], rk: [46, 110], ra: [37, 138], fr: [33, 144],
-    le: [55, 57], lw: [61, 73], re: [45, 57], rw: [40, 74], prop: "motion" },
-  "twirl": { le: [27, 46], lw: [15, 54], re: [73, 46], rw: [85, 54], la: [44, 141], rk: [60, 108], ra: [62, 138], prop: "spin" },
-  "jump": { dy: -12, lk: [37, 98], la: [42, 120], rk: [63, 98], ra: [58, 120], le: [30, 26], lw: [24, 10], re: [70, 26], rw: [76, 10], prop: "shadow" },
-  "seated-chair": { side: true, gaze: [1, 0], h: [46, 46], n: [46, 60], ls: [44, 64], rs: [48, 64], le: [48, 84], lw: [60, 96], re: [44, 84], rw: [56, 98],
-    lh: [44, 102], rh: [46, 102], lk: [68, 101], rk: [70, 103], la: [68, 142], ra: [71, 142], prop: "chair" },
-  "seated-floor": { side: true, gaze: [1, 0], h: [36, 76], n: [36, 90], ls: [34, 94], rs: [38, 94], le: [30, 114], lw: [24, 140], re: [46, 112], rw: [60, 116],
-    lh: [38, 134], rh: [40, 136], lk: [60, 114], la: [72, 140], rk: [70, 138], ra: [92, 140] },
-  "squat": { side: true, gaze: [1, 0], h: [52, 64], n: [52, 78], ls: [50, 82], rs: [54, 82], le: [60, 100], lw: [66, 112], re: [62, 98], rw: [70, 106],
-    lh: [42, 118], rh: [45, 119], lk: [64, 110], rk: [66, 112], la: [56, 141], ra: [58, 141] },
-  "kneeling": { side: true, gaze: [1, 0], h: [48, 44], n: [48, 58], ls: [46, 62], rs: [50, 62], le: [46, 82], lw: [50, 100], re: [58, 80], rw: [70, 102],
-    lh: [46, 100], rh: [48, 100], lk: [72, 104], la: [72, 141], rk: [50, 140], ra: [28, 141] },
-  "reclining": { side: true, gaze: [1, 0], h: [22, 106], n: [28, 116], ls: [30, 120], rs: [32, 120], le: [28, 141], lw: [40, 142], re: [34, 140], rw: [46, 142],
-    lh: [64, 132], rh: [66, 134], lk: [80, 116], la: [92, 141], rk: [84, 138], ra: [98, 141] },
-  "wall-lean": { h: [60, 22], n: [60, 36], ls: [52, 40], rs: [68, 40], le: [47, 60], lw: [46, 80], re: [72, 58], rw: [73, 78],
-    lh: [50, 80], rh: [60, 80], lk: [46, 110], la: [42, 142], rk: [53, 110], ra: [47, 142], prop: "wall" },
-  "forward-lean": { side: true, gaze: [1, 0.2], h: [68, 42], n: [63, 54], ls: [61, 58], rs: [64, 58], le: [60, 82], lw: [57, 106], re: [63, 82], rw: [61, 106],
-    lh: [47, 86], rh: [50, 86], lk: [54, 114], rk: [56, 114], la: [49, 142], ra: [53, 142] },
+  "walking": { side: true, far: "l", gaze: [1, 0], lk: [57, 107], la: [58, 141], rk: [47, 109], ra: [40, 137], fr: [36, 144],
+    le: [56, 56], lw: [61, 72], re: [46, 56], rw: [42, 73], prop: "motion" },
+  "twirl": { le: [30, 46], lw: [18, 54], re: [70, 46], rw: [82, 54], rk: [58, 106], ra: [60, 136], fr: [58, 145], prop: "spin" },
+  "jump": { dy: -12, lk: [40, 98], la: [44, 120], rk: [58, 92], ra: [64, 112], le: [32, 24], lw: [28, 8], re: [68, 24], rw: [72, 8], prop: "shadow" },
+  "seated-chair": { side: true, gaze: [1, 0], h: [46, 46], n: [46, 59], ls: [44, 63], rs: [48, 63], le: [49, 82], lw: [60, 94], re: [45, 82], rw: [56, 96],
+    lh: [43, 100], rh: [46, 100], lk: [68, 100], rk: [69, 103], la: [66, 141], ra: [62, 141], prop: "chair" },
+  "seated-floor": { side: true, gaze: [1, 0], h: [36, 76], n: [36, 89], ls: [34, 93], rs: [38, 93], le: [30, 113], lw: [24, 140], re: [46, 111], rw: [60, 115],
+    lh: [37, 133], rh: [40, 135], lk: [60, 113], la: [72, 140], rk: [70, 138], ra: [92, 140] },
+  "squat": { side: true, gaze: [1, 0], h: [52, 64], n: [52, 77], ls: [50, 81], rs: [54, 81], le: [60, 99], lw: [66, 111], re: [62, 97], rw: [70, 105],
+    lh: [42, 117], rh: [45, 118], lk: [64, 109], rk: [66, 111], la: [56, 138], ra: [58, 138], fl: [62, 144], fr: [64, 144] },
+  "kneeling": { side: true, gaze: [1, 0], h: [48, 44], n: [48, 57], ls: [46, 61], rs: [50, 61], le: [47, 81], lw: [50, 99], re: [58, 79], rw: [70, 101],
+    lh: [46, 99], rh: [48, 99], lk: [72, 103], la: [72, 141], rk: [50, 140], ra: [28, 141] },
+  "reclining": { side: true, gaze: [1, 0], h: [22, 105], n: [28, 115], ls: [30, 119], rs: [32, 119], le: [28, 141], lw: [40, 142], re: [34, 140], rw: [46, 142],
+    lh: [64, 131], rh: [66, 133], lk: [80, 115], la: [92, 141], rk: [84, 137], ra: [98, 141] },
+  "wall-lean": { h: [60, 22], n: [60, 35], ls: [53, 39], rs: [67, 39], le: [49, 59], lw: [50, 78], re: [72, 57], rw: [73, 76],
+    lh: [50, 78], rh: [62, 78], lk: [50, 108], la: [44, 141], rk: [56, 108], ra: [50, 141], prop: "wall" },
+  "forward-lean": { side: true, gaze: [1, 0.2], h: [68, 42], n: [63, 53], ls: [61, 57], rs: [64, 57], le: [60, 81], lw: [57, 105], re: [63, 81], rw: [61, 105],
+    lh: [46, 86], rh: [49, 86], lk: [54, 113], rk: [56, 113], la: [49, 141], ra: [53, 141] },
+  "hip-pop": { ls: [41, 35], rs: [59, 39], h: [48, 20], n: [49, 33], le: [37, 55], lw: [39, 74], re: [67, 56], rw: [62, 74],
+    lh: [44, 76], rh: [64, 73], lk: [48, 108], la: [48, 141], rk: [55, 108], ra: [52, 141] },
+  "pigeon-toe": { lk: [48, 106], rk: [52, 106], la: [43, 140], ra: [57, 140], fl: [47, 144], fr: [53, 144], le: [40, 57], lw: [46, 74], re: [60, 57], rw: [54, 74] },
+  "pointed-toe": { lk: [46, 108], la: [46, 141], rk: [60, 107], ra: [67, 136], fr: [72, 145], lh: [41, 75], rh: [59, 77] },
+  "shoulder-pop": { h: [53, 21], n: [51, 33], ls: [42, 38], rs: [59, 32], tilt: -14, gaze: [0.6, 0], re: [64, 52], rw: [62, 72] },
+  "hand-on-thigh": { re: [66, 60], rw: [60, 93], le: [36, 56], lw: [40, 75] },
+  "hem-hold": { le: [35, 60], lw: [30, 86], re: [65, 60], rw: [70, 86], prop: "skirt" },
+  "hand-on-neck": { re: [63, 55], rw: [53, 35], h: [49, 20], tilt: 8 },
+  "hair-flip": { h: [47, 21], tilt: -18, gaze: [-0.6, 0], re: [70, 30], rw: [64, 12], prop: "flip" },
+  "mermaid-sit": { gaze: [0.3, 0], h: [42, 78], n: [43, 91], ls: [36, 96], rs: [51, 94], le: [30, 116], lw: [28, 142], re: [56, 112], rw: [64, 124],
+    lh: [41, 130], rh: [56, 133], lk: [74, 122], la: [62, 136], rk: [80, 139], ra: [66, 145], fl: [57, 137], fr: [61, 146] },
 };
-const FIG_BONES = [["n", "ls"], ["n", "rs"], ["ls", "le"], ["le", "lw"], ["rs", "re"], ["re", "rw"], ["ls", "lh"], ["rs", "rh"],
+const FIG_BONES = [["n", "ls"], ["n", "rs"], ["ls", "le"], ["le", "lw"], ["rs", "re"], ["re", "rw"],
   ["lh", "rh"], ["lh", "lk"], ["lk", "la"], ["rh", "rk"], ["rk", "ra"]];
 function poseFigure(id) {
   const o = POSE_FIGS[id]; if (!o) return LOGO_SVG;
   const k = { ...(o.side ? FIG_SIDE : FIG_BASE), ...o };
   if (o.dy) for (const n of Object.keys(FIG_BASE)) if (!(n in o) || o.up) k[n] = [k[n][0], k[n][1] + o.dy];
-  const pt = (n) => k[n].join(" "), L = (a, b, x = "") => `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"${x}/>`;
-  const faded = (a, b) => o.far && (a[0] === o.far || b[0] === o.far) && a !== "n";
+  const L = (a, b, x = "") => `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"${x}/>`;
+  const far = (n) => o.far && n[0] === o.far && n !== "n";
+  const cls = (...ns) => (ns.some(far) ? ` class="far"` : "");
+  const [hx, hy] = k.h;
   let s = `<svg viewBox="0 0 100 160" width="100%" height="100%" aria-hidden="true" class="fig">`;
   // ground + props (muted)
   s += `<g class="prop">${L([4, 148], [96, 148], ` stroke-dasharray="3 4"`)}`;
-  if (o.prop === "chair") s += `<path d="M38 104H64M40 104V148M62 104V148M38 104V66"/>`;
-  if (o.prop === "wall") s += `<path d="M76 4V148"/><path d="M76 20l6-6M76 44l6-6M76 68l6-6M76 92l6-6M76 116l6-6M76 140l6-6"/>`;
-  if (o.prop === "bag") s += `<path d="M70 74l4-2 4 2"/><rect x="66" y="80" width="18" height="15" rx="3"/>`;
+  if (o.prop === "chair") s += `<path d="M38 102H64M40 102V148M62 102V148M38 102V64"/>`;
+  if (o.prop === "wall") s += `<path d="M77 4V148"/><path d="M77 20l6-6M77 44l6-6M77 68l6-6M77 92l6-6M77 116l6-6M77 140l6-6"/>`;
+  if (o.prop === "bag") s += `<path d="M66 72l4-2 4 2"/><rect x="62" y="78" width="18" height="15" rx="3"/>`;
   if (o.prop === "motion") s += `<path d="M14 60h12M10 80h14M14 100h12"/>`;
-  if (o.prop === "spin") s += `<path d="M22 128a28 9 0 0 0 56 0" /><path d="M74 133l5-5-1 7"/>`;
-  if (o.prop === "shadow") s += `<ellipse cx="50" cy="148" rx="16" ry="2.5"/>`;
-  s += `</g><g class="bones">`;
-  for (const [a, b] of FIG_BONES) s += L(k[a], k[b], faded(a, b) ? ` class="far"` : "");
-  // feet: short strokes from the ankles (toes) unless set
-  const fl = o.fl || (o.side ? [k.la[0] + 5, k.la[1] + 3] : [k.la[0] - 4, k.la[1] + 4]);
-  const fr = o.fr || (o.side ? [k.ra[0] + 5, k.ra[1] + 3] : [k.ra[0] + 4, k.ra[1] + 4]);
-  s += L(k.la, fl, o.far === "l" ? ` class="far"` : "") + L(k.ra, fr, o.far === "r" ? ` class="far"` : "");
-  // neck to head
-  const [hx, hy] = k.h, dx = k.n[0] - hx, dy = k.n[1] - hy, d = Math.hypot(dx, dy) || 1;
-  s += L([hx + dx / d * 8.5, hy + dy / d * 8.5], k.n);
-  if (o.back) s += L(k.n, [(k.lh[0] + k.rh[0]) / 2, k.lh[1]], ` stroke-dasharray="2 3"`);
-  s += `</g><circle class="head${o.back ? " back" : ""}" cx="${hx}" cy="${hy}" r="8.5"/>`;
-  if (o.tilt != null) {
-    const a = o.tilt * Math.PI / 180, c = Math.cos(a) * 5, sn = Math.sin(a) * 5;
+  if (o.prop === "spin") s += `<path d="M24 126a26 9 0 0 0 52 0"/><path d="M72 131l5-5-1 7"/>`;
+  if (o.prop === "shadow") s += `<ellipse cx="50" cy="148" rx="15" ry="2.5"/>`;
+  if (o.prop === "skirt") s += `<path d="M44 66L${k.lw[0]} ${k.lw[1] + 2}Q50 ${k.lw[1] + 9} ${k.rw[0]} ${k.rw[1] + 2}L56 66"/>`;
+  if (o.prop === "flip") s += `<path d="M${hx + 6} ${hy - 6}q16 -8 24 4M${hx + 8} ${hy}q14 -2 20 10"/>`;
+  s += `</g>`;
+  // hair: long strands behind the head (only the back side in profile; filled from behind)
+  const hair = (sx) => `M${hx + sx * 7} ${hy - 4}C${hx + sx * 12} ${hy + 6} ${hx + sx * 11} ${hy + 18} ${hx + sx * 8} ${hy + 25}`;
+  const tiltX = o.tilt ? o.tilt / 6 : 0;
+  s += `<g class="hair" transform="rotate(${tiltX} ${hx} ${hy})"><path d="${o.side && !o.back ? hair(-1) : hair(-1) + hair(1)}"/></g>`;
+  s += `<g class="bones">`;
+  // torso: shoulders curve in to the waist and out to the hips (hourglass); in profile a gentle lumbar curve
+  const waist = (sh, hp, sign) => {
+    const mx = (k[sh][0] + k[hp][0]) / 2, my = (k[sh][1] + k[hp][1]) / 2 + 2;
+    const pinch = o.side ? -2.5 : sign * Math.max(3, Math.abs(k.ls[0] - k.rs[0]) * 0.22);
+    return `<path d="M${k[sh][0]} ${k[sh][1]}Q${mx + pinch} ${my} ${k[hp][0]} ${k[hp][1]}"${cls(sh, hp)}/>`;
+  };
+  const lSide = k.ls[0] <= k.rs[0] ? 1 : -1;
+  s += waist("ls", "lh", lSide) + waist("rs", "rh", -lSide);
+  for (const [a, b] of FIG_BONES) s += L(k[a], k[b], cls(a, b));
+  // feet: pointed toes from the ankles unless set
+  const fl = o.fl || (o.side ? [k.la[0] + 5, k.la[1] + 4] : [k.la[0] - 1.5, k.la[1] + 5]);
+  const fr = o.fr || (o.side ? [k.ra[0] + 5, k.ra[1] + 4] : [k.ra[0] + 1.5, k.ra[1] + 5]);
+  s += L(k.la, fl, cls("la")) + L(k.ra, fr, cls("ra"));
+  const dx = k.n[0] - hx, dy = k.n[1] - hy, d = Math.hypot(dx, dy) || 1;
+  s += L([hx + dx / d * 8, hy + dy / d * 8], k.n);
+  if (o.back) s += `<path d="M${k.n[0]} ${k.n[1]}L${(k.lh[0] + k.rh[0]) / 2} ${k.lh[1]}" stroke-dasharray="2 3"/>`;
+  s += `</g><circle class="head${o.back ? " back" : ""}" cx="${hx}" cy="${hy}" r="8"/>`;
+  if (o.tilt) {
+    const a = o.tilt * Math.PI / 180, c = Math.cos(a) * 4.5, sn = Math.sin(a) * 4.5;
     s += `<line class="face" x1="${hx - c}" y1="${hy - sn - 1}" x2="${hx + c}" y2="${hy + sn - 1}"/>`;
   }
   const g = o.gaze;
   if (g && (g[0] || g[1])) {
     const gd = Math.hypot(g[0], g[1]);
-    s += `<circle class="eye" cx="${hx + g[0] / gd * 4.5}" cy="${hy + g[1] / gd * 4.5}" r="1.8"/>`;
+    s += `<circle class="eye" cx="${hx + g[0] / gd * 4.2}" cy="${hy + g[1] / gd * 4.2}" r="1.7"/>`;
     if (o.look) s += `<path class="look" d="M${hx + g[0] / gd * 12} ${hy + g[1] / gd * 12}L${hx + g[0] / gd * 24} ${hy + g[1] / gd * 24}"/>`;
   }
   s += `<g class="joints">`;
   for (const n of ["n", "ls", "rs", "le", "re", "lw", "rw", "lh", "rh", "lk", "rk", "la", "ra"])
-    s += `<circle cx="${k[n][0]}" cy="${k[n][1]}" r="2.2"${o.far && n[0] === o.far ? ` class="far"` : ""}/>`;
+    s += `<circle cx="${k[n][0]}" cy="${k[n][1]}" r="2"${far(n) ? ` class="far"` : ""}/>`;
   return s + `</g></svg>`;
+}
+// ---------------------------------------------------------------- Research tab: the studies behind the pose directory
+// Every entry was checked against Crossref (title, authors, journal, volume, pages, DOI) on 15 Nov 2026.
+const RESEARCH = [
+  { group: "Why these poses", items: [
+    { title: "Contrapposto makes the body read as more attractive", poses: ["contrapposto", "hip-pop", "hand-on-hip"],
+      finding: "Female 3D figures in contrapposto were rated more attractive than the same figures standing straight, from every viewing angle. The weight shift makes one side's waist-to-hip curve deeper, and that side drew more of viewers' gaze. A follow-up EEG study found the pose also changes viewers' brain responses.",
+      posey: "Contrapposto, Hip pop and Hand on hip are all built on this weight shift.",
+      caveat: "Avatars rather than photos, and university-student raters.",
+      refs: [
+        { cite: "Pazhoohi, F., Macedo, A. F., Doyle, J. F., & Arantes, J. (2020). Waist-to-hip ratio as supernormal stimuli: Effect of contrapposto pose and viewing angle. Archives of Sexual Behavior, 49, 837–847.", doi: "10.1007/s10508-019-01486-z" },
+        { cite: "Pazhoohi, F., Arantes, J., Kingstone, A., & Pinal, D. (2020). Becoming sexy: Contrapposto pose increases attractiveness ratings and modulates observers' brain activity. Biological Psychology, 151, 107842.", doi: "10.1016/j.biopsycho.2020.107842" } ] },
+    { title: "A defined waist is a strong cue", poses: ["hands-on-hips", "hem-hold", "hand-on-thigh"],
+      finding: "Waist-to-hip ratio was a consistent cue in how female figures were judged; lower ratios (around 0.7) were rated most attractive and healthy in this classic series of studies.",
+      posey: "Poses that frame or show the waist (Hands on waist, Holding the hem) are in the directory.",
+      caveat: "Later work found the preferred ratio varies across cultures and with body weight.",
+      refs: [ { cite: "Singh, D. (1993). Adaptive significance of female physical attractiveness: Role of waist-to-hip ratio. Journal of Personality and Social Psychology, 65(2), 293–307.", doi: "10.1037/0022-3514.65.2.293" } ] },
+    { title: "A curved lower back reads as feminine", poses: ["forward-lean", "wall-lean", "over-shoulder"],
+      finding: "Men's ratings of female silhouettes rose as the lower-back curve approached a mid-range optimum, and still favoured that curve when buttock size was held constant.",
+      posey: "Leans and the over-the-shoulder look arch the back. In profile, Posey's figures draw that gentle curve.",
+      caveat: "Male raters and line silhouettes, with an evolutionary explanation that is debated.",
+      refs: [ { cite: "Lewis, D. M. G., Russell, E. M., Al-Shawaf, L., & Buss, D. M. (2015). Lumbar curvature: A previously undiscovered standard of attractiveness. Evolution and Human Behavior, 36(5), 345–350.", doi: "10.1016/j.evolhumbehav.2015.01.007" } ] },
+    { title: "Lifted heels and hip sway exaggerate a feminine gait", poses: ["tiptoe", "pointed-toe", "walking"],
+      finding: "In point-light videos, the same women walking in heels were rated more attractive and more often recognised as women. Heels shortened the stride and increased hip rotation and tilt. Separately, viewers judging walkers' sex looked mostly at the waist and hips, and hip sway read as feminine.",
+      posey: "On tiptoe, Pointed toe and Walking borrow these cues: a lifted heel, a crossing step and swaying hips.",
+      caveat: "These studies measured walking, not still photos, and the heels study was small.",
+      refs: [
+        { cite: "Morris, P. H., White, J., Morrison, E. R., & Fisher, K. (2013). High heels as supernormal stimuli: How wearing high heels affects judgements of female attractiveness. Evolution and Human Behavior, 34(3), 176–181.", doi: "10.1016/j.evolhumbehav.2012.11.006" },
+        { cite: "Johnson, K. L., & Tassinary, L. G. (2005). Perceiving sex directly and indirectly: Meaning in motion and morphology. Psychological Science, 16(11), 890–897.", doi: "10.1111/j.1467-9280.2005.01633.x" } ] },
+  ] },
+  { group: "Head and face", items: [
+    { title: "A slightly lowered head reads as more feminine", poses: ["gaze-down", "head-tilt", "shoulder-pop"],
+      finding: "Tilting female faces downward made them look more feminine and attractive, and tilting them upward did the opposite. For male faces, an upward tilt read as more masculine.",
+      posey: "Gaze down, Head tilt and Shoulder pop are there to soften the face. Chin up stays for a cooler editorial look.",
+      caveat: "Computer-generated faces, rated still.",
+      refs: [ { cite: "Burke, D., & Sulikowski, D. (2010). A new viewpoint on the evolution of sexually dimorphic human faces. Evolutionary Psychology, 8(4), 573–585.", doi: "10.1177/147470491000800404" } ] },
+    { title: "Chin up reads as dominant", poses: ["chin-up"],
+      finding: "The same neutral face looked more dominant with the head raised and less dominant with it bowed, and the effect grew with the angle.",
+      posey: "Use Chin up when the look should feel strong or aloof. Lower the chin for something softer.",
+      caveat: "The original stimuli were low resolution, and later studies tie part of the effect to apparent expression.",
+      refs: [ { cite: "Mignault, A., & Chaudhuri, A. (2003). The many faces of a neutral face: Head tilt and perception of dominance and emotion. Journal of Nonverbal Behavior, 27(2), 111–132.", doi: "10.1023/A:1023914509763" } ] },
+    { title: "Portraits favour the left cheek", poses: ["three-quarter", "over-shoulder", "looking-away"],
+      finding: "Across centuries of painted portraits, sitters more often turned the left cheek toward the viewer. The authors link this to showing emotion, since the left side of the face is more expressive.",
+      posey: "For three-quarter and over-the-shoulder poses, try turning the left cheek to the camera first.",
+      caveat: "This describes painted portraits. It is a tendency, not a rule.",
+      refs: [ { cite: "Nicholls, M. E. R., Clode, D., Wood, S. J., & Wood, A. G. (1999). Laterality of expression in portraiture: Putting your best cheek forward. Proceedings of the Royal Society B, 266(1428), 1517–1522.", doi: "10.1098/rspb.1999.0809" } ] },
+  ] },
+  { group: "What we left out", items: [
+    { title: "Wide, square stances read as dominance", poses: ["power-stance", "arms-crossed"], retired: true,
+      finding: "Open, expansive postures are seen as dominant and powerful. In a dating-app study they still raised interest for both women and men. The claimed hormone effects of 'power posing' did not replicate, although people did report feeling more powerful.",
+      posey: "Power stance and Arms crossed are retired. Posey is a guide for feminine poses, so the choice is about style, not a finding that open poses are unattractive. Old tags still show; Claude no longer suggests them.",
+      caveat: "The dating study used only three women and three men as targets.",
+      refs: [
+        { cite: "Vacharkulksemsuk, T., Reit, E., Khambatta, P., Eastwick, P. W., Finkel, E. J., & Carney, D. R. (2016). Dominant, open nonverbal displays are attractive at zero-acquaintance. PNAS, 113(15), 4009–4014.", doi: "10.1073/pnas.1508932113" },
+        { cite: "Ranehill, E., Dreber, A., Johannesson, M., Leiberg, S., Sul, S., & Weber, R. A. (2015). Assessing the robustness of power posing: No effect on hormones and risk tolerance in a large sample of men and women. Psychological Science, 26(5), 653–656.", doi: "10.1177/0956797614553946" } ] },
+  ] },
+  { group: "How Posey reads a pose", items: [
+    { title: "A body is a handful of keypoints", poses: ["arms-relaxed"], kp: true,
+      finding: "Pose-estimation research describes a body as a small set of joints (head, shoulders, elbows, wrists, hips, knees, ankles) joined into a skeleton. The COCO dataset set that standard, OpenPose made it real-time, and BlazePose runs it on a phone.",
+      posey: "Posey's 15-point skeleton follows the same layout. Claude places the points and you can correct them by dragging. The phone uses them to scale a pose to your body (auto-fit) and to find your best match.",
+      refs: [
+        { cite: "Lin, T.-Y., Maire, M., Belongie, S., et al. (2014). Microsoft COCO: Common objects in context. ECCV 2014, LNCS 8693, 740–755.", doi: "10.1007/978-3-319-10602-1_48" },
+        { cite: "Cao, Z., Simon, T., Wei, S.-E., & Sheikh, Y. (2017). Realtime multi-person 2D pose estimation using part affinity fields. CVPR 2017, 1302–1310.", doi: "10.1109/CVPR.2017.143" },
+        { cite: "Bazarevsky, V., Grishchenko, I., Raveendran, K., Zhu, T., Zhang, F., & Grundmann, M. (2020). BlazePose: On-device real-time body pose tracking. CVPR Workshop on Computer Vision for AR/VR.", url: "https://arxiv.org/abs/2006.10204", label: "arXiv:2006.10204" } ] },
+  ] },
+];
+function renderResearch() {
+  const box = $("researchView"); box.hidden = false;
+  if (box.childElementCount) return;
+  const intro = document.createElement("p"); intro.className = "research-intro";
+  intro.textContent = "Why the pose directory looks the way it does: the published studies behind each choice, what Posey does with them, and their limits. These are average perceptions from specific samples, not rules.";
+  box.appendChild(intro);
+  for (const g of RESEARCH) {
+    const title = document.createElement("div"); title.className = "section-title"; title.textContent = g.group;
+    const grid = document.createElement("div"); grid.className = "research-grid";
+    for (const it of g.items) {
+      const c = document.createElement("article"); c.className = "research-card" + (it.retired ? " retired" : "");
+      const figs = it.poses.map((id) => `<button class="rfig" type="button" data-id="${id}" title="${esc(POSE_TYPES.get(id)?.name || "")}"${it.retired || it.kp ? " disabled" : ""}>${poseFigure(id)}</button>`).join("");
+      c.innerHTML = `<div class="rhead"><div class="rfigs">${figs}</div><h3>${esc(it.title)}</h3></div>
+        <p>${esc(it.finding)}</p>
+        <p class="in-posey"><b>In Posey</b> ${esc(it.posey)}</p>
+        ${it.caveat ? `<p class="caveat"><b>Limits</b> ${esc(it.caveat)}</p>` : ""}
+        <ol class="refs">${it.refs.map((r) => `<li>${esc(r.cite)} <a href="${r.url || "https://doi.org/" + r.doi}" target="_blank" rel="noopener">${esc(r.label || "doi:" + r.doi)}</a></li>`).join("")}</ol>`;
+      c.querySelectorAll(".rfig:not([disabled])").forEach((b) => b.onclick = () => { tab = "poses"; openType = b.dataset.id; render(); toTop(); });
+      grid.appendChild(c);
+    }
+    box.append(title, grid);
+  }
 }
 const photosTagged = (typeId) => albumsDoc.albums.flatMap((a) => a.poses).filter((id) => tagsOf(id).includes(typeId));
 
@@ -1272,7 +1416,7 @@ function renderPoses() {
     box.appendChild(h);
   }
   for (const g of DIR.groups) {
-    const types = DIR.poses.filter((t) => t.group === g.id);
+    const types = ACTIVE.filter((t) => t.group === g.id);
     if (!types.length) continue;
     const title = document.createElement("div"); title.className = "section-title"; title.textContent = g.name;
     const grid = document.createElement("div"); grid.className = "grid";
@@ -1338,7 +1482,7 @@ function renderSearch(q) {
   const box = $("searchView"); box.hidden = false; box.innerHTML = "";
   const has = (t) => t && String(t).toLowerCase().includes(q);
   const albums = albumsDoc.albums.filter((a) => has(a.name));
-  const types = DIR.poses.filter((t) => has(t.name) || has(t.id.replace(/-/g, " ")));
+  const types = ACTIVE.filter((t) => has(t.name) || has(t.id.replace(/-/g, " ")));
   const typeIds = new Set(types.map((t) => t.id));
   const models = modelGroups().filter((g) => g.key !== UNKNOWN && has(g.name));
   const photos = albumsDoc.albums.flatMap((a) => a.poses.map((id) => [id, a])).filter(([id, a]) => {
@@ -1526,7 +1670,7 @@ scenes; people_count counts every person visible; full_body is true only when th
 whole body from head top to feet is inside the image.
 tags: the poses below that this person is doing, most characteristic first (1 to 4 ids,
 only ones that clearly apply). Ids and what they mean:
-${DIR.poses.map((t) => `- ${t.id}: ${t.description}`).join("\n")}`;
+${ACTIVE.map((t) => `- ${t.id}: ${t.description}`).join("\n")}`;
 const ASK = "This is a candidate pose-reference photo, usually with the background removed " +
   "(grey). First fill in subject: is it a real person, how many people are " +
   "visible, and is the whole body from the top of the head to the feet inside " +
@@ -1540,7 +1684,7 @@ const SCHEMA = {
     summary: { type: "string" },
     subject: { type: "object", properties: { is_human: { type: "boolean" }, people_count: { type: "integer" }, full_body: { type: "boolean" } },
       required: ["is_human", "people_count", "full_body"], additionalProperties: false },
-    tags: { type: "array", items: { type: "string", enum: DIR.poses.map((t) => t.id) } },
+    tags: { type: "array", items: { type: "string", enum: ACTIVE.map((t) => t.id) } },
   },
   required: ["subject", "points", "summary", "tags"], additionalProperties: false,
 };
@@ -1552,7 +1696,7 @@ const TAG_SCHEMA = {
 };
 const TAG_ASK = "Which poses from the directory is this person doing? Return their ids as tags, " +
   "most characteristic first, and a one-sentence summary of the pose.";
-const cleanTags = (tags) => [...new Set((tags || []).filter((t) => POSE_TYPES.has(t)))].slice(0, 4);
+const cleanTags = (tags) => [...new Set((tags || []).filter((t) => POSE_TYPES.has(t) && !POSE_TYPES.get(t).retired))].slice(0, 4);
 
 function rejectReason(s) {
   if (!s) return null;
@@ -1912,7 +2056,7 @@ function renderTags() {
   // Every pose in the directory not yet tagged, grouped, one click to add.
   const pick = $("tagPicker"); pick.innerHTML = "";
   for (const g of DIR.groups) {
-    const free = DIR.poses.filter((x) => x.group === g.id && !tags.includes(x.id));
+    const free = ACTIVE.filter((x) => x.group === g.id && !tags.includes(x.id));
     if (!free.length) continue;
     const sec = document.createElement("div");
     sec.innerHTML = `<div class="grp">${esc(g.name)}</div><div class="opts"></div>`;
